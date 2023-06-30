@@ -7,12 +7,13 @@ from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
 from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from scipy.interpolate import interp1d
+from utils import  get_global_acc
 import tqdm
 import h5py
 import matplotlib.pyplot as plt
-from scipy.signal import savgol_filter
+
 import os
+import matplotlib.pyplot as plt
 
 import tqdm
 
@@ -40,19 +41,6 @@ class AddCostToRewardEnv(WaymoEnv):
         return state, new_reward, done, info
 
 
-def calculate_diff_from_whole_trajectory(xs, ts, idx, n_f=30, n_b=30):
-    # xs, ys, ts: traj in x, y axis
-    # idx: idx that we want to estimate the 1st diff
-    # n_f, n_b: data points at front, at back (eg. idx -n_f |____|____| idx + n_f)
-    # Interpolate the data using a quadratic spline
-    tck_x = interp1d(ts[max(0, idx - n_f): min(ts.shape[0], idx + n_b)], 
-                     xs[max(0, idx - n_f): min(ts.shape[0], idx + n_b)], kind='cubic', bounds_error=False, fill_value="extrapolate")
-    dt = np.mean(np.diff(ts))
-    # Differentiate the splines to obtain the velocity in the x and y directions
-    dxs = np.gradient(tck_x(ts[max(0, idx - n_f): min(ts.shape[0], idx + n_b)]), dt)
-    
-    dx= dxs[min(n_f-1, idx)]
-    return dx
 
 
 def get_current_ego_trajectory(waymo_env):
@@ -81,18 +69,26 @@ def get_current_ego_trajectory_old(waymo_env,i):
     position[:,1] = -position[:,1]
     heading = np.rad2deg(-heading)
     velocity[:,1] = -velocity[:,1]
+    
 
-    return ts, position, velocity, heading
+    # velocity[:,0] = velocity[:,0]* np.cos(heading)
+
+    # velocity[:,1] = velocity[:,1]* np.sin(heading)
+
+
+
+    global_acc = get_global_acc(velocity,ts)
+    local_acc = global_acc 
+    local_acc[:,0] = global_acc[:,0] * np.cos(-heading)
+    local_acc[:,1] = global_acc[:,1] * np.sin(-heading)
+
+
+
+    return ts, position, velocity, local_acc, heading
 
 
 
 
-
-def get_global_acc(velocity,ts):
-    acc = np.zeros_like(velocity)
-    acc[:,0] = [calculate_diff_from_whole_trajectory(velocity[:,0], ts, i) for i in range(velocity.shape[0])] 
-    acc[:,1] = [calculate_diff_from_whole_trajectory(velocity[:,1], ts, i) for i in range(velocity.shape[0])] 
-    return acc
 
 
 
@@ -100,7 +96,11 @@ def get_global_acc(velocity,ts):
 def main(args):
 
     file_list = os.listdir(args['pkl_dir'])
-    num_scenarios = len(file_list)
+    if args['num_of_scenarios'] == 'ALL':
+        num_scenarios = len(file_list)
+    else:
+        # num_scenarios = int(args['num_of_scenarios'])
+        num_scenarios = 10
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
     {
@@ -137,34 +137,43 @@ def main(args):
     
     f = h5py.File(args['h5py_path'], 'w')
     for seed in range(num_scenarios):
-        try: 
+        # try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
-            ts, _, vel, _ = get_current_ego_trajectory_old(env,seed)
-            acc = get_global_acc(vel,ts)
-
+            ts, _, vel, local_acc, heading = get_current_ego_trajectory_old(env,seed)
+            # 
+   
             # try without filtered acc to maintain consistancy with speed
 
             # acc[:,0] = savgol_filter(acc[:,0], 20, 3)
             # acc[:,1] = savgol_filter(acc[:,1], 20, 3)
 
-            """
+            
             plt.figure()
-            # Plot time versus acceleration
-            plt.plot(ts, acc[:,0], ts, acc[:,1])
+            # # Plot time versus acceleration
+            # plt.plot(ts, acc[:,0], ts, acc[:,1])
+            # plt.legend()
+            # plt.xlabel('Time')
+            # plt.ylabel('Acceleration')
+            # plt.title('Time vs. Acceleration')
+            # plt.figure()
+            # # Plot time versus acceleration
+            # plt.plot(ts, vel[:,0], ts, vel[:,1])
+            # plt.legend()
+            # plt.xlabel('Time')
+            # plt.ylabel('Velocity')
+            # plt.title('Time vs. Velocity')
+            # plt.show()
+
+
+            # PLOT SLIP ANGLE:
+            plt.plot(ts, np.arctan2(vel[:,1],vel[:,0])*180 /np.pi, label = 'vel dir')
+            plt.plot(ts, heading, label = 'heading')
             plt.legend()
             plt.xlabel('Time')
-            plt.ylabel('Acceleration')
-            plt.title('Time vs. Acceleration')
-            plt.figure()
-            # Plot time versus acceleration
-            plt.plot(ts, vel[:,0], ts, vel[:,1])
-            plt.legend()
-            plt.xlabel('Time')
-            plt.ylabel('Velocity')
-            plt.title('Time vs. Velocity')
+            plt.ylabel('heading (deg) and vel_direction (deg)')
             plt.show()
-            """
+            
             
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
                 # ac = np.array([1.0,1.0]) #dummy action
@@ -177,8 +186,8 @@ def main(args):
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
                 # env.render(mode="topdown")
                 # print(env.vehicle.speed, env.vehicle.heading, reward, info['cost'])
-        except:
-            continue
+        # except:
+        #     continue
         
 
     f.create_dataset("observation", data=obs_rec)
@@ -200,7 +209,7 @@ if __name__ == "__main__":
     # parser.add_argument('--policy_load_dir', type=str)
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
-
+    parser.add_argument('--num_of_scenarios', type=str, default='3')
     args = parser.parse_args()
     args = vars(args)
 

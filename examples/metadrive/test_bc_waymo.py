@@ -20,7 +20,7 @@ import os
 from metadrive import MetaDriveEnv
 from metadrive.policy.replay_policy import ReplayTrafficParticipantPolicy
 from metadrive.policy.expert_policy import ExpertPolicy
-from sp_utils import check_observation_action_space, map_discrete_to_continuous, map_continuous_to_discrete
+from examples.metadrive.utils import check_observation_action_space, map_discrete_to_continuous, map_continuous_to_discrete
 
 
 if __name__ == "__main__":

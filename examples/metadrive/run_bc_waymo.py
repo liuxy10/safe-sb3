@@ -6,39 +6,18 @@ import os
 from datetime import datetime
 
 from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from metadrive.envs.real_data_envs.waymo_env import WaymoEnv
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 
 from metadrive.engine.asset_loader import AssetLoader
 from stable_baselines3 import BC
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
-
+from utils import AddCostToRewardEnv
 
 WAYMO_SAMPLING_FREQ = 10
 
 
 
-
-class AddCostToRewardEnv(WaymoEnv):
-    def __init__(self, wrapped_env, lamb=1.):
-        """Initialize the class.
-        
-        Args: 
-            wrapped_env: the env to be wrapped
-            lamb: new_reward = reward + lamb * cost_hazards
-        """
-        super().__init__(wrapped_env)
-        self._lamb = lamb
-
-    def set_lambda(self, lamb):
-        self._lamb = lamb
-
-    def step(self, action):
-        state, reward, done, info = super().step(action)
-        new_reward = reward - self._lamb * info['cost']
-        info["re"] = reward
-        return state, new_reward, done, info
 
 def main(args):
 
