@@ -1,8 +1,6 @@
 import gym
 import h5py
 import numpy as np
-import safety_gym
-import bullet_safety_gym
 import tqdm
 
 from stable_baselines3 import SAC

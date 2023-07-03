@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive")
 from utils import AddCostToRewardEnv_base
-from utils import get_global_acc
+from utils import get_acc_from_vel
 
 
 
@@ -35,7 +35,7 @@ def collect_action_acc_grid_data(args):
 
     '''
     num_dp_per_dim = args['num_dp_per_dim'] 
-    num_tested_scenarios = 10
+    num_tested_scenarios = num_dp_per_dim**3
     print("num of scenarios: ", num_tested_scenarios)
     env = AddCostToRewardEnv_base(
     {
@@ -59,34 +59,40 @@ def collect_action_acc_grid_data(args):
     }
     )
 
-    # config = dict(
-    #     # controller="joystick",
-    #     use_render=True,
-    #     manual_control=True,
-    #     traffic_density=0.1,
-    #     environment_num=100,
-    #     random_agent_model=True,
-    #     random_lane_width=True,
-    #     random_lane_num=True,
-    #     map=4,  # seven block
-    #     start_seed=random.randint(0, 1000)
-    # )
+
+
 
 
     env.seed(0)
 
+    '''
 
-    # build mesh grid 
+    Assume the action is given in the unit of power, this means that the acc generated must depend on a base speed, throttle and steering angle.
+    Thus we need to Perform a series of experiments where you vary the speed, throttle position, and steering angle while measuring the corresponding 
+    acceleration. Use different combinations of inputs to cover a wide range of driving scenarios.
+
+    The testing procedure: vary the speed, throttle position, and steering angle
+
+    1. drive straight till reaching the base speed, say 5 m/s.
+    
+    2. collect 2 sec (2*10 = 20 dps) of lontitute and latitute speed data when you maintain the specified throttle position, and steering angle.
+
+    3. assume the base speed does not change during 2 sec, fit a line to the 20 data points collected. the slope would be the estimated acceleration 
+    (we could also plot residual vesus time to see if the linearization approximation makes sense)
+
+    4. record the (slope,std) into a num_dp_per_dim*num_dp_per_dim*num_dp_per_dim map 
+        
+    '''
     
     lat = np.linspace(-1,1,num_dp_per_dim)
-    lon = np.linspace(0.1,1,num_dp_per_dim)
-    
+    lon = np.linspace(-1,1,num_dp_per_dim)
+    speed = [0, 5, 10, ]
     action_lat, action_lon = np.meshgrid(lat,lon)
-    lasting_sec = 3
+    lasting_sec = 2
 
-    # collect acc data lasting for 5 sec each 
+    # collect acc data lasting for 2 sec each 
 
-    acc = np.zeros([num_dp_per_dim, num_dp_per_dim])
+    acc = np.zeros([num_dp_per_dim, num_dp_per_dim, num_dp_per_dim])
     
     # collect action with specified num of scenarios
     for k in range(0, num_tested_scenarios):
@@ -97,30 +103,42 @@ def collect_action_acc_grid_data(args):
                 headings = []
                 local_accs = []
                 
-                # one round
+                # one round of experiment 
                 for _ in range(int(lasting_sec * WAYMO_SAMPLING_FREQ)):
+                    
                     action = np.array([action_lat[i,j], action_lon[i,j]])
                     o, r, d, info = env.step(action)
                     vels.append(env.engine.agent_manager.active_agents['default_agent'].velocity)
                     headings.append(env.engine.agent_manager.active_agents['default_agent'].heading_theta)
+
+
+                # as long as we agree that the heading direction is the same with velocity, 
+                # then we can calculate the longtitute and latitute speed as the derivative of the local velocity
                 
                 headings = np.array(headings)
                 vels = np.array(vels)
-                local_vel =np.array([vels [:,0]*np.cos(-headings), vels [:,1]*np.sin(-headings) ]).T
+
+                local_vel = np.array([vels [:,0]*np.cos(headings) + vels [:,1]*np.sin(headings), 
+                                      vels [:,0]*np.sin(headings) - vels [:,1]*np.cos(headings)]).T
                 ts = np.arange(int(lasting_sec * WAYMO_SAMPLING_FREQ))/WAYMO_SAMPLING_FREQ
-                global_acc = get_global_acc(vels,ts, smooth_acc = True) 
-                local_acc = np.array([global_acc [:,0]*np.cos(-headings), global_acc [:,1]*np.sin(-headings) ]).T
+                local_acc = get_acc_from_vel(local_vel,ts, smooth_acc = True) 
+                # local_acc = np.array([global_acc [:,0]*np.cos(headings) + global_acc [:,1]*np.sin(headings), 
+                #                       global_acc [:,0]*np.sin(headings) - global_acc [:,1]*np.cos(headings)]).T
                 
                 plt.figure()
                 # Plot time versus acceleration
-                plt.plot(ts, local_acc[:,0], ts, local_acc[:,1])
+                plt.plot(ts, local_acc[:,0], label='local lat')
+                plt.plot(ts, local_acc[:,1], label='local lon')
+                # plt.plot(ts, global_acc[:,0], ts, global_acc[:,1], label = 'global')
                 plt.legend()
                 plt.xlabel('Time')
                 plt.ylabel('Acceleration')
                 plt.title('Time vs. Acceleration')
                 plt.figure()
                 # Plot time versus acceleration
-                plt.plot(ts, local_vel[:,0], ts, local_vel[:,1])
+                plt.plot(ts, local_vel[:,0], label = 'local lat')
+                plt.plot(ts, local_vel[:,1], label = 'local lon')
+                # plt.plot(ts, vels[:,0], ts, vels[:,1], label = 'global')
                 plt.legend()
                 plt.xlabel('Time')
                 plt.ylabel('local Velocity')

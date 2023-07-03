@@ -7,7 +7,7 @@ from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
 from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from utils import  get_global_acc
+from utils import  get_acc_from_vel
 import tqdm
 import h5py
 import matplotlib.pyplot as plt
@@ -63,6 +63,9 @@ def get_current_ego_trajectory_old(waymo_env,i):
     position = np.array(state_all_traj[:,0:2])
     heading = np.array(state_all_traj[:,6])
     velocity = np.array(state_all_traj[:,7:9])
+    speed = np.linalg.norm(velocity, axis = 1)
+    print(i, np.max(speed), np.mean(speed))
+    
     
 
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
@@ -77,7 +80,7 @@ def get_current_ego_trajectory_old(waymo_env,i):
 
 
 
-    global_acc = get_global_acc(velocity,ts)
+    global_acc = get_acc_from_vel(velocity,ts)
     local_acc = global_acc 
     local_acc[:,0] = global_acc[:,0] * np.cos(-heading)
     local_acc[:,1] = global_acc[:,1] * np.sin(-heading)
@@ -140,7 +143,7 @@ def main(args):
         # try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
-            ts, _, vel, local_acc, heading = get_current_ego_trajectory_old(env,seed)
+            ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
             # 
    
             # try without filtered acc to maintain consistancy with speed

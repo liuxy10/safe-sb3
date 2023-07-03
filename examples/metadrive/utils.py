@@ -67,7 +67,7 @@ def calculate_diff_from_whole_trajectory(xs, ts, idx, n_f=30, n_b=30):
     dx= dxs[min(n_f-1, idx)]
     return dx
 
-def get_global_acc(velocity,ts, smooth_acc = False):
+def get_acc_from_vel(velocity,ts, smooth_acc = False):
     acc = np.zeros_like(velocity)
     acc[:,0] = [calculate_diff_from_whole_trajectory(velocity[:,0], ts, i) for i in range(velocity.shape[0])] 
     acc[:,1] = [calculate_diff_from_whole_trajectory(velocity[:,1], ts, i) for i in range(velocity.shape[0])] 
