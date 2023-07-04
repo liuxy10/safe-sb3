@@ -48,10 +48,74 @@ class AddCostToRewardEnv_base(MetaDriveEnv):
         info["re"] = reward
         return state, new_reward, done, info
 
+############## query map shit #########################
+
+
+def get_unique_vals(dat):
+    # dat should be consistent with data collected from collect_action_acc_pair.py
+    # dat in the form of lat action input, lon action input, base speed, lat_acc, lon_acc, lat_sse, lon_sse
+
+    lat_acc_vals, lon_acc_vals, base_speed_vals = np.unique(dat[:,3]), np.unique(dat[:,4]), np.unique(dat[:,2])  
+    return  lat_acc_vals, lon_acc_vals, base_speed_vals
+
+
+
+def query_nearest_value_1d(query, vals):
+    min_idx = np.argmin(np.abs(vals - query))
+    return vals[min_idx]
+
+def find_nearest_pt_2d_index(x,y, xs, ys):
+    dist = (xs-x)**2 + (ys - y)**2
+    return  np.argmin(dist)
+
+def estimate_action(dat, query_speed, query_lat_acc, query_lon_acc, use_2nd_pt = False):
+    # first, we take the nearest speed bin
+    base_speed_vals = np.unique(dat[:,2])  
+    speed = query_nearest_value_1d(query_speed, base_speed_vals)
+    
+    # then we 'slice' speed to attain acc space given a speed
+    dat_lat_act, dat_lon_act,dat_base_speed, dat_lat_acc, dat_lon_acc, dat_lat_sse, dat_lon_sse = dat[:,0], dat[:,1], dat[:,2], dat[:,3], dat[:,4], dat[:,5], dat[:,6]
+    lat_acc_given_speed = dat_lat_acc[dat_base_speed == speed]
+    lon_acc_given_speed = dat_lon_acc[dat_base_speed == speed]
+    lat_act_given_speed = dat_lat_act[dat_base_speed == speed]
+    lon_act_given_speed = dat_lon_act[dat_base_speed == speed]
+
+
+    if use_2nd_pt:
+        ## TODO:  find 2 nearest points in acc space and linear intepolate
+        pass
+
+    else: 
+        # Easiest way out: find the nearest point in acc space!
+        idx = find_nearest_pt_2d_index(query_lat_acc, query_lon_acc, lat_acc_given_speed, lon_acc_given_speed)
+        return [lat_act_given_speed[idx], lon_act_given_speed[idx]]
+
+
+    
+
+
+
+
+
+
+
+
+
+
 ################ some geometry utils ####################
 
 from scipy.signal import savgol_filter
 from scipy.interpolate import interp1d
+
+
+
+
+def get_local_from_heading(glb, headings):
+
+    # global pose (vel) should be in the shape of (n,2), headings should contains headings (n) in the unit of radians
+
+    return np.array([glb [:,0]*np.cos(headings) + glb [:,1]*np.sin(headings), 
+                            glb [:,0]*np.sin(headings) - glb [:,1]*np.cos(headings)]).T
 
 def calculate_diff_from_whole_trajectory(xs, ts, idx, n_f=30, n_b=30):
     # xs, ys, ts: traj in x, y axis

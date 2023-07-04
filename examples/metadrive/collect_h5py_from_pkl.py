@@ -7,41 +7,18 @@ from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
 from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from utils import  get_acc_from_vel
+from utils import get_acc_from_vel, get_local_from_heading
 import tqdm
 import h5py
-import matplotlib.pyplot as plt
-
 import os
 import matplotlib.pyplot as plt
 
-import tqdm
+import sys
+sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive")
+from utils import AddCostToRewardEnv
 
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
-
-class AddCostToRewardEnv(WaymoEnv):
-    def __init__(self, wrapped_env, lamb=1.):
-        """Initialize the class.
-        
-        Args: 
-            wrapped_env: the env to be wrapped
-            lamb: new_reward = reward + lamb * cost_hazards
-        """
-        super().__init__(wrapped_env)
-        self._lamb = lamb
-
-    def set_lambda(self, lamb):
-        self._lamb = lamb
-
-    def step(self, action):
-        state, reward, done, info = super().step(action)
-        new_reward = reward - self._lamb * info['cost']
-        info["re"] = reward
-        return state, new_reward, done, info
-
-
-
 
 def get_current_ego_trajectory(waymo_env):
     data = waymo_env.engine.data_manager.current_scenario
@@ -73,27 +50,14 @@ def get_current_ego_trajectory_old(waymo_env,i):
     heading = np.rad2deg(-heading)
     velocity[:,1] = -velocity[:,1]
     
+    # revised to be consistant with collect_action_acc_pair.py
+    local_vel = get_local_from_heading(velocity, heading)
 
-    # velocity[:,0] = velocity[:,0]* np.cos(heading)
+    local_acc = get_acc_from_vel(local_vel, ts)
 
-    # velocity[:,1] = velocity[:,1]* np.sin(heading)
-
-
-
-    global_acc = get_acc_from_vel(velocity,ts)
-    local_acc = global_acc 
-    local_acc[:,0] = global_acc[:,0] * np.cos(-heading)
-    local_acc[:,1] = global_acc[:,1] * np.sin(-heading)
-
-
+    
 
     return ts, position, velocity, local_acc, heading
-
-
-
-
-
-
 
 
 def main(args):
@@ -103,8 +67,8 @@ def main(args):
         num_scenarios = len(file_list)
     else:
         # num_scenarios = int(args['num_of_scenarios'])
-        num_scenarios = 10
-    print("num of scenarios: ", num_scenarios)
+        num_scenarios = 10 
+    print("num of scenarios: ", num_scenarios) 
     env = AddCostToRewardEnv(
     {
         "manual_control": False,
@@ -134,8 +98,6 @@ def main(args):
     re_rec = np.ndarray((0, ))
     terminal_rec = np.ndarray((0, ), dtype=bool)
     cost_rec = np.ndarray((0, ))
-    # cost_hazards_rec = np.ndarray((0, ))
-    
 
     
     f = h5py.File(args['h5py_path'], 'w')
@@ -145,38 +107,33 @@ def main(args):
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
             # 
-   
-            # try without filtered acc to maintain consistancy with speed
-
-            # acc[:,0] = savgol_filter(acc[:,0], 20, 3)
-            # acc[:,1] = savgol_filter(acc[:,1], 20, 3)
-
+            plot_slip_angle_gap =False
+            if plot_slip_angle_gap:
+                plt.figure()
+                plt.plot(ts, np.arctan2(vel[:,1],vel[:,0])*180 /np.pi, label = 'vel dir')
+                plt.plot(ts, heading, label = 'heading')
+                plt.legend()
+                plt.xlabel('Time')
+                plt.ylabel('heading (deg) and vel_direction (deg)')
+                plt.show()
             
-            plt.figure()
-            # # Plot time versus acceleration
-            # plt.plot(ts, acc[:,0], ts, acc[:,1])
-            # plt.legend()
-            # plt.xlabel('Time')
-            # plt.ylabel('Acceleration')
-            # plt.title('Time vs. Acceleration')
-            # plt.figure()
-            # # Plot time versus acceleration
-            # plt.plot(ts, vel[:,0], ts, vel[:,1])
-            # plt.legend()
-            # plt.xlabel('Time')
-            # plt.ylabel('Velocity')
-            # plt.title('Time vs. Velocity')
-            # plt.show()
+            plot_acc_vel = False
+            if plot_acc_vel:
+                plt.figure()
+                plt.plot(ts, acc[:,0], ts, acc[:,1])
+                plt.legend()
+                plt.xlabel('Time')
+                plt.ylabel('Acceleration')
+                plt.title('Time vs. Acceleration')
+                
+                plt.figure()
+                plt.plot(ts, vel[:,0], ts, vel[:,1])
+                plt.legend()
+                plt.xlabel('Time')
+                plt.ylabel('Velocity')
+                plt.title('Time vs. Velocity')
+                plt.show()
 
-
-            # PLOT SLIP ANGLE:
-            plt.plot(ts, np.arctan2(vel[:,1],vel[:,0])*180 /np.pi, label = 'vel dir')
-            plt.plot(ts, heading, label = 'heading')
-            plt.legend()
-            plt.xlabel('Time')
-            plt.ylabel('heading (deg) and vel_direction (deg)')
-            plt.show()
-            
             
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
                 # ac = np.array([1.0,1.0]) #dummy action
