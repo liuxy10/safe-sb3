@@ -101,9 +101,8 @@ def plot_acceleration_as_variable(dat, query = None):
 
 
 
-def plot_reachable_region(dat, query = None):
+def plot_reachable_region(base_speed, lat_acc, lon_acc, query = None):
 
-    lat_act, lon_act, base_speed, lat_acc, lon_acc, lat_sse, lon_sse = dat.T[:]
      # Create a 3D plot
     fig = plt.figure()
     ax1 = fig.add_subplot(111, projection='3d') 
@@ -133,11 +132,12 @@ if __name__ == "__main__":
 
     # lat action input, lon action input, base speed + lat_acc + lon_acc + 
     dat = np.load("examples/metadrive/map_action_to_acc/log/test.npy")[0]
+    lat_act, lon_act, base_speed, lat_acc, lon_acc, lat_sse, lon_sse = dat.T[:]
     print(dat.shape)
 
     query = [10, 1, 5]
-    plot_acceleration_as_variable(dat, query)
-    plot_reachable_region(dat, query)
+    # plot_acceleration_as_variable(dat, query)
+    plot_reachable_region(base_speed, lat_acc, lon_acc, query)
 
     # test the query function 
     # estimate_action(dat, )

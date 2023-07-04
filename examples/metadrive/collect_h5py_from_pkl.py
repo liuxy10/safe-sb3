@@ -6,8 +6,8 @@ from metadrive.envs.real_data_envs.waymo_env import WaymoEnv
 from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
-from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from utils import get_acc_from_vel, get_local_from_heading
+
 import tqdm
 import h5py
 import os
@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive")
 from utils import AddCostToRewardEnv
+sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/map_action_to_acc")
+from visualize_map import plot_reachable_region
 
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
@@ -47,13 +49,31 @@ def get_current_ego_trajectory_old(waymo_env,i):
 
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
     position[:,1] = -position[:,1]
-    heading = np.rad2deg(-heading)
+    heading = -heading
     velocity[:,1] = -velocity[:,1]
     
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
-
     local_acc = get_acc_from_vel(local_vel, ts)
+
+    plot_global_vs_local_vel = True
+    if plot_global_vs_local_vel:
+        plt.figure()
+        # Plot time versus vel
+        plt.plot(ts, velocity[:,0], label = 'global lon')
+        plt.plot(ts, velocity[:,1], label = 'global lat')
+        plt.scatter(ts, local_vel[:,0], label = 'local lat')
+        plt.scatter(ts, local_vel[:,1], label = 'local lon')
+        # plt.plot(ts, vels[:,0], ts, vels[:,1], label = 'global')
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('local/global Velocity')
+        plt.title(f"Time vs. local/global Velocity")
+        plt.show()
+
+    speed = np.linalg.norm(velocity, axis = 1)
+    plot_reachable_region(speed, local_acc[:,1], local_acc[:,0])
+    
 
     
 
@@ -66,8 +86,8 @@ def main(args):
     if args['num_of_scenarios'] == 'ALL':
         num_scenarios = len(file_list)
     else:
-        # num_scenarios = int(args['num_of_scenarios'])
-        num_scenarios = 10 
+        num_scenarios = int(args['num_of_scenarios'])
+        # num_scenarios = 10 
     print("num of scenarios: ", num_scenarios) 
     env = AddCostToRewardEnv(
     {
@@ -169,7 +189,7 @@ if __name__ == "__main__":
     # parser.add_argument('--policy_load_dir', type=str)
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
-    parser.add_argument('--num_of_scenarios', type=str, default='3')
+    parser.add_argument('--num_of_scenarios', type=str, default='10')
     args = parser.parse_args()
     args = vars(args)
 
