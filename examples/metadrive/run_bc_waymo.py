@@ -129,7 +129,7 @@ def test(args):
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/one_pack.h5py')
+    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_20')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--env_seed', '-es', type=int, default=0)

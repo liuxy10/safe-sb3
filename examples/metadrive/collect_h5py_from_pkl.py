@@ -125,7 +125,7 @@ def main(args):
     map = np.load(args['map_dir'])[0]
 
     for seed in range(num_scenarios):
-        # try: 
+        try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
@@ -181,8 +181,9 @@ def main(args):
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
                 # env.render(mode="topdown")
                 # print(env.vehicle.speed, env.vehicle.heading, reward, info['cost'])
-        # except:
-        #     continue
+        except:
+            print("skipping traj "+str(seed))
+            continue
         
 
     f.create_dataset("observation", data=obs_rec)
@@ -198,13 +199,9 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--env', '-e', type=str, default='Safexp-CarButton1-v0')
-    # parser.add_argument('--env_seed', '-es', type=int, default=3)
-    # parser.add_argument('--steps', type=int, default=int(1e5))
-    # parser.add_argument('--policy_load_dir', type=str)
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
-    parser.add_argument('--num_of_scenarios', type=str, default='10')
+    parser.add_argument('--num_of_scenarios', type=str, default='100')
     parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)
