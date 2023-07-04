@@ -82,14 +82,6 @@ def get_acc_from_vel(velocity,ts, smooth_acc = False):
 
 
 
-
-
-
-
-
-
-
-
 ########### debug #####################
 def check_observation_action_space(env):
     # Access the observation space
