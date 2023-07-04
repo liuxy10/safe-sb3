@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive")
 from utils import AddCostToRewardEnv
+from utils import estimate_action
 sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/map_action_to_acc")
 from visualize_map import plot_reachable_region
 
@@ -80,6 +81,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
 
 def main(args):
 
+
+
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
         num_scenarios = len(file_list)
@@ -119,6 +122,8 @@ def main(args):
 
     
     f = h5py.File(args['h5py_path'], 'w')
+    map = np.load(args['map_dir'])[0]
+
     for seed in range(num_scenarios):
         # try: 
             env.reset(force_seed=seed)
@@ -130,12 +135,11 @@ def main(args):
             speed = np.linalg.norm(vel, axis = 1)
 
 
-            plot_traj_range = True
+            plot_traj_range = False
             if plot_traj_range:
                 plot_reachable_region(speed, acc[:,1], acc[:,0])
             
-
-
+           
             plot_slip_angle_gap =False
             if plot_slip_angle_gap:
                 plt.figure()
@@ -166,7 +170,9 @@ def main(args):
             
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
                 # ac = np.array([1.0,1.0]) #dummy action
-                ac = acc[t,:] 
+                lon_acc, lat_acc = acc[t,:]
+                
+                ac = estimate_action(map, speed[t], lat_acc, lon_acc)
                 obs, reward, done, info = env.step(ac) # whatever the input action is overwrited to be zero
                 obs_rec = np.concatenate((obs_rec, obs.reshape(1, obs.shape[0])))
                 ac_rec = np.concatenate((ac_rec, ac.reshape(1, ac.shape[0]))) 
@@ -199,6 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
     parser.add_argument('--num_of_scenarios', type=str, default='10')
+    parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)
 

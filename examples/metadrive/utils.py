@@ -88,7 +88,7 @@ def estimate_action(dat, query_speed, query_lat_acc, query_lon_acc, use_2nd_pt =
     else: 
         # Easiest way out: find the nearest point in acc space!
         idx = find_nearest_pt_2d_index(query_lat_acc, query_lon_acc, lat_acc_given_speed, lon_acc_given_speed)
-        return [lat_act_given_speed[idx], lon_act_given_speed[idx]]
+        return np.array([lat_act_given_speed[idx], lon_act_given_speed[idx]])
 
 
     
