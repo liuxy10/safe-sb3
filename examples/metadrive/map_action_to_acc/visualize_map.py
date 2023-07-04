@@ -45,6 +45,7 @@ def plot_with_log_data(dat):
     ax2.legend()
 
     plt.show()
+    plt.savefig(fig, "examples/metadrive/map_action_to_acc/log/visualize_map.png")
 
     print(lat_act.shape)
 if __name__ == "__main__":
