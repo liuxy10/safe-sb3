@@ -49,6 +49,7 @@ def pid_controller(setpoint, measured_value, error_sum, last_error, dt):
 def get_current_pose (env):
     global_vel = env.engine.agent_manager.active_agents['default_agent'].velocity
     heading = env.engine.agent_manager.active_agents['default_agent'].heading_theta
+
     return global_vel, heading
 
 def get_current_speed (env):
@@ -67,7 +68,7 @@ def one_round_exp(env, lat_act, lon_act, base_speed, stable_time, collect_time_w
     for _ in range(int(stable_time * SAMPLING_FREQ)):
         global_vel, heading = get_current_pose(env)
         lon_speed = global_vel [0]*np.cos(heading) + global_vel[1]*np.sin(heading)
-        
+
         action_lon, error_sum, last_error= pid_controller(base_speed,lon_speed, error_sum, last_error, 1/SAMPLING_FREQ)
         # print("action, error_sum, last_error = ", action_lon, error_sum, last_error)
         
@@ -109,6 +110,17 @@ def one_round_exp(env, lat_act, lon_act, base_speed, stable_time, collect_time_w
     local_vel = get_local_from_heading(vels, headings) # vels and headings 
     ts = np.arange(int(collect_time_window_width * SAMPLING_FREQ))/SAMPLING_FREQ
     # local_acc = get_acc_from_vel(local_vel,ts, smooth_acc = True) 
+
+
+    plot_slip_angle_gap =False
+    if plot_slip_angle_gap:
+        plt.figure()
+        plt.plot(ts, np.arctan2(vels[:,1],vels[:,0]), label = 'vel dir')
+        plt.plot(ts, headings, label = 'heading')
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('heading (rad) and vel_direction (rad)')
+        plt.show()
     
     # lon acc:
     lon_speed = local_vel[:,0]

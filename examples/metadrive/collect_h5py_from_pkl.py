@@ -43,7 +43,7 @@ def get_current_ego_trajectory_old(waymo_env,i):
     heading = np.array(state_all_traj[:,6])
     velocity = np.array(state_all_traj[:,7:9])
     speed = np.linalg.norm(velocity, axis = 1)
-    print(i, np.max(speed), np.mean(speed))
+    
     
     
 
@@ -56,26 +56,24 @@ def get_current_ego_trajectory_old(waymo_env,i):
     local_vel = get_local_from_heading(velocity, heading)
     local_acc = get_acc_from_vel(local_vel, ts)
 
-    plot_global_vs_local_vel = True
+    print("max speed, avg speed, max lat acc, max lon acc, min lon acc = {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}".format(
+           np.max(speed), 3, np.mean(speed), 3, np.max(np.abs(local_acc[:,1])), 3, np.max(local_acc[:,0]), 3, np.min(local_acc[:,0]), 3))
+    
+
+    plot_global_vs_local_vel = False
     if plot_global_vs_local_vel:
         plt.figure()
         # Plot time versus vel
-        plt.plot(ts, velocity[:,0], label = 'global lon')
-        plt.plot(ts, velocity[:,1], label = 'global lat')
-        plt.scatter(ts, local_vel[:,0], label = 'local lat')
-        plt.scatter(ts, local_vel[:,1], label = 'local lon')
+        plt.plot(ts, velocity[:,0], label = 'global x')
+        plt.plot(ts, velocity[:,1], label = 'global y')
+        plt.scatter(ts, local_vel[:,0], label = 'local lon')
+        plt.scatter(ts, local_vel[:,1], label = 'local lat')
         # plt.plot(ts, vels[:,0], ts, vels[:,1], label = 'global')
         plt.legend()
         plt.xlabel('Time')
         plt.ylabel('local/global Velocity')
-        plt.title(f"Time vs. local/global Velocity")
+        plt.title("Time vs. local/global Velocity")
         plt.show()
-
-    speed = np.linalg.norm(velocity, axis = 1)
-    plot_reachable_region(speed, local_acc[:,1], local_acc[:,0])
-    
-
-    
 
     return ts, position, velocity, local_acc, heading
 
@@ -126,15 +124,26 @@ def main(args):
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
-            # 
+            
+            
+
+            speed = np.linalg.norm(vel, axis = 1)
+
+
+            plot_traj_range = True
+            if plot_traj_range:
+                plot_reachable_region(speed, acc[:,1], acc[:,0])
+            
+
+
             plot_slip_angle_gap =False
             if plot_slip_angle_gap:
                 plt.figure()
-                plt.plot(ts, np.arctan2(vel[:,1],vel[:,0])*180 /np.pi, label = 'vel dir')
+                plt.plot(ts, np.arctan2(vel[:,1],vel[:,0]), label = 'vel dir')
                 plt.plot(ts, heading, label = 'heading')
                 plt.legend()
                 plt.xlabel('Time')
-                plt.ylabel('heading (deg) and vel_direction (deg)')
+                plt.ylabel('heading (rad) and vel_direction (rad)')
                 plt.show()
             
             plot_acc_vel = False
