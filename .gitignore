@@ -1,6 +1,7 @@
 *.swp
 *.pyc
 *.pkl
+*.h5py
 *.py~
 *.bak
 .pytest_cache
