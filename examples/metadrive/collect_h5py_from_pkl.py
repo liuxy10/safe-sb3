@@ -14,10 +14,10 @@ import os
 import matplotlib.pyplot as plt
 
 import sys
-sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive")
+sys.path.append("examples/metadrive")
 from utils import AddCostToRewardEnv
 from utils import estimate_action
-sys.path.append("/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/map_action_to_acc")
+sys.path.append("examples/metadrive/map_action_to_acc")
 from visualize_map import plot_reachable_region
 
 WAYMO_SAMPLING_FREQ = 10
