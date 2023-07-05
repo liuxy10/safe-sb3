@@ -103,12 +103,13 @@ def test(args):
     
     exp_name = "bc-waymo-es" + str(args["env_seed"])
     
-    model = BC.load('examples/metadrive/saved_bc_policy/bc-waymo-es3.zip')
+    model = BC.load(os.path.join(args['output_dir'], exp_name))
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
             
             for i in range(199):
                 action, _ = model.predict(o, deterministic = True)
+                action[1] = - action[-1]
                 o, r, d, info = env.step(action)
 
                 # env.render(mode="rgb_array")
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_20')
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
@@ -138,5 +139,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    # main(args)
+    test(args)
