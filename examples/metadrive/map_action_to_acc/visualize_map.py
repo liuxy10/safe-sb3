@@ -136,8 +136,8 @@ if __name__ == "__main__":
     print(dat.shape)
 
     query = [10, 1, 5]
-    # plot_acceleration_as_variable(dat, query)
-    plot_reachable_region(base_speed, lat_acc, lon_acc, query)
+    plot_acceleration_as_variable(dat, query)
+    # plot_reachable_region(base_speed, lat_acc, lon_acc, query)
 
     # test the query function 
     # estimate_action(dat, )

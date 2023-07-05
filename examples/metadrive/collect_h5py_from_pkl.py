@@ -23,15 +23,15 @@ from visualize_map import plot_reachable_region
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
-def get_current_ego_trajectory(waymo_env):
-    data = waymo_env.engine.data_manager.current_scenario
+# def get_current_ego_trajectory(waymo_env):
+#     data = waymo_env.engine.data_manager.current_scenario
 
-    id = data['metadata']['sdc_id']
-    position = np.array(data['tracks'][id]['state']['position'])
-    heading = np.array(data['tracks'][id]['state']['heading'])
-    velocity = np.array(data['tracks'][id]['state']['velocity'])
-    ts = np.array(data['metadata']['ts'])
-    return ts, position, velocity, heading
+#     id = data['metadata']['sdc_id']
+#     position = np.array(data['tracks'][id]['state']['position'])
+#     heading = np.array(data['tracks'][id]['state']['heading'])
+#     velocity = np.array(data['tracks'][id]['state']['velocity'])
+#     ts = np.array(data['metadata']['ts'])
+#     return ts, position, velocity, heading
 
 def get_current_ego_trajectory_old(waymo_env,i):
     data = waymo_env.engine.data_manager.get_case(i)
@@ -49,9 +49,9 @@ def get_current_ego_trajectory_old(waymo_env,i):
     
 
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
-    position[:,1] = -position[:,1]
-    heading = -heading
-    velocity[:,1] = -velocity[:,1]
+    # position[:,1] = -position[:,1]
+    # heading = -heading
+    # velocity[:,1] = -velocity[:,1]
     
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
@@ -121,7 +121,7 @@ def main(args):
     cost_rec = np.ndarray((0, ))
 
     
-    f = h5py.File(args['h5py_path'], 'w')
+    
     map = np.load(args['map_dir'])[0]
 
     for seed in range(num_scenarios):
@@ -129,11 +129,7 @@ def main(args):
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
-            
-            
-
             speed = np.linalg.norm(vel, axis = 1)
-
 
             plot_traj_range = False
             if plot_traj_range:
@@ -179,18 +175,71 @@ def main(args):
                 re_rec = np.concatenate((re_rec, np.array([reward])))
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
-                # env.render(mode="topdown")
-                # print(env.vehicle.speed, env.vehicle.heading, reward, info['cost'])
+
+        
+
         except:
             print("skipping traj "+str(seed))
             continue
         
+        
+        num_scenarios_per_buffer = 20
+        num_dps_per_scenarios = 91
+        num_dps_per_buffer = num_scenarios_per_buffer * num_dps_per_scenarios
+        max_num_dps = num_scenarios * num_dps_per_scenarios
 
-    f.create_dataset("observation", data=obs_rec)
-    f.create_dataset("action", data=ac_rec)
-    f.create_dataset("reward", data=re_rec)
-    f.create_dataset("terminal", data=terminal_rec)
-    f.create_dataset("cost", data=cost_rec)
+        if seed % num_scenarios_per_buffer == num_scenarios_per_buffer - 1:
+            if seed < num_scenarios_per_buffer:
+
+                f = h5py.File(args['h5py_path'], 'w') 
+                f.create_dataset("observation",(num_dps_per_buffer, obs.shape[0]), maxshape=(max_num_dps, obs.shape[0]), data=obs_rec)
+                f.create_dataset("action", (num_dps_per_buffer, ac.shape[0]), maxshape=(max_num_dps, ac.shape[0]), data=ac_rec)
+                f.create_dataset("reward", (num_dps_per_buffer, ), maxshape=(max_num_dps,), data=re_rec)
+                f.create_dataset("terminal", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=terminal_rec)
+                f.create_dataset("cost", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=cost_rec)
+
+                # Flush the changes to the file
+                f.flush()
+
+                # reinit all recorded variables
+                obs_rec = np.ndarray((0, ) + env.observation_space.shape)
+                ac_rec = np.ndarray((0, ) + env.action_space.shape)
+                re_rec = np.ndarray((0, ))
+                terminal_rec = np.ndarray((0, ), dtype=bool)
+                cost_rec = np.ndarray((0, ))
+            
+            else: 
+                f = h5py.File(args['h5py_path'], 'a') 
+                name_dat_dict = {"observation":obs_rec, 
+                            "action": ac_rec, 
+                            "reward": re_rec, 
+                            "terminal":terminal_rec,
+                            "cost":cost_rec}
+                
+                for name in name_dat_dict.keys():
+                    new_data = name_dat_dict[name]
+                    dataset = f[name]
+                    if len(dataset.shape) == 2:
+                        dataset.resize((dataset.shape[0] + len(new_data), dataset.shape[1]))  # Resize the dataset to accommodate the new data
+                    else: 
+                        dataset.resize((dataset.shape[0] + len(new_data),))
+                    dataset[-len(new_data):] = new_data  # Append the new data
+
+                    # Flush the dataset and file
+                    dataset.flush()
+                    f.flush()
+
+                # reinit all recorded variables
+                obs_rec = np.ndarray((0, ) + env.observation_space.shape)
+                ac_rec = np.ndarray((0, ) + env.action_space.shape)
+                re_rec = np.ndarray((0, ))
+                terminal_rec = np.ndarray((0, ), dtype=bool)
+                cost_rec = np.ndarray((0, ))
+
+                print("[buffer] done round: "+ str(seed))
+
+
+    f.close()
     env.close()
 
 
@@ -200,8 +249,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
-    parser.add_argument('--num_of_scenarios', type=str, default='100')
+    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
+    parser.add_argument('--num_of_scenarios', type=str, default='900')
     parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)

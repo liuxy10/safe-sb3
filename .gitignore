@@ -20,7 +20,7 @@ git_rewrite_commit_history.sh
 **/**/.pkl
 examples/metadrive/tfrecord_9/*
 examples/metadrive/tfrecord_20/*
-
+examples/metadrive/h5py/*
 
 # Setuptools distribution and build folders.
 /dist/

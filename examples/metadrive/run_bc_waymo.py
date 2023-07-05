@@ -109,7 +109,7 @@ def test(args):
             
             for i in range(199):
                 action, _ = model.predict(o, deterministic = True)
-                action[1] = - action[-1]
+                # action[1] = - action[-1]
                 o, r, d, info = env.step(action)
 
                 # env.render(mode="rgb_array")
@@ -135,9 +135,9 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--steps', '-st', type=int, default=int(1e5))
+    parser.add_argument('--steps', '-st', type=int, default=int(1e6))
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
