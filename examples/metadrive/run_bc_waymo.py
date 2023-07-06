@@ -5,7 +5,7 @@ import h5py
 import os
 from datetime import datetime
 
-from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
+# from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 
 from metadrive.engine.asset_loader import AssetLoader
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--steps', '-st', type=int, default=int(1e6))
+    parser.add_argument('--steps', '-st', type=int, default=int(1000000))
     args = parser.parse_args()
     args = vars(args)
 

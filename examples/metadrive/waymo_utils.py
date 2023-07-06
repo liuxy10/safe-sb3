@@ -324,10 +324,12 @@ def parse_data(args):
     cnt = 0
     scenario = scenario_pb2.Scenario()
     file_list = os.listdir(args['tfrecord_dir'])
+    print(file_list)
     for file in tqdm(file_list):
         file_path = os.path.join(args['tfrecord_dir'], file)
-        if not 'scenario' in file_path:
-            continue
+        # print(file_path)
+        # if not 'scenario' in file_path:
+        #     continue
         dataset = tf.data.TFRecordDataset(file_path, compression_type='')
         for j, data in enumerate(dataset.as_numpy_iterator()):
             scenario.ParseFromString(data)
