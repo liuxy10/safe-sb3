@@ -8,7 +8,7 @@ from datetime import datetime
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 
-from stable_baselines3 import BC
+from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
 
@@ -57,11 +57,13 @@ def main(args):
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
 
-    model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-    model.learn(total_timesteps=args['steps'], data_dir=args['h5py_path'])
+    # model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+    model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+    
+    model.learn(total_timesteps=args['steps'])
 
     model.save(os.path.join(args['output_dir'], exp_name))
-    # loaded_agent = BC.load(exp_name)
+    # loaded_agent =PPO.load(exp_name)
 
     
     del model
@@ -90,7 +92,7 @@ def test(args):
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": True,
-        "reactive_traffic": False,
+        "reactive_traffic": True,
                 # "vehicle_config": dict(
                 #     show_lidar=True,
                 #     # no_wheel_friction=True,
@@ -109,17 +111,18 @@ def test(args):
     
     exp_name = "bc-waymo-es" + str(args["env_seed"])
     
-    model = BC.load(os.path.join(args['output_dir'], exp_name))
+    model =PPO.load(os.path.join(args['output_dir'], exp_name))
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
-            
+            cum_rew, cum_cost = 0,0
             for i in range(91):
                 action, _ = model.predict(o, deterministic = True)
                 # action[1] = - action[-1]
                 o, r, d, info = env.step(action)
-
+                cum_rew += r
+                cum_cost += info['cost']
                 # env.render(mode="rgb_array")
-                print('action:', action, 'reward: ', r, 'cost: ',info['cost'], 'done:', d)
+                print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
                 if d:
                     print('seed '+str(seed)+' is over!')
                     break
@@ -146,5 +149,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
