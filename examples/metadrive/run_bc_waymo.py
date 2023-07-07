@@ -8,9 +8,7 @@ from datetime import datetime
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 
-from metadrive.engine.asset_loader import AssetLoader
 from stable_baselines3 import BC
-from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
 
@@ -23,7 +21,11 @@ def main(args):
 
     
     file_list = os.listdir(args['pkl_dir'])
-    num_scenarios = len(file_list)
+    if args['num_of_scenarios'] == 'ALL':
+        num_scenarios = len(file_list)
+    else:
+        num_scenarios = int(args['num_of_scenarios'])
+
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
     {
@@ -73,7 +75,11 @@ def main(args):
 
 def test(args):
     file_list = os.listdir(args['pkl_dir'])
-    num_scenarios = len(file_list)
+    if args['num_of_scenarios'] == 'ALL':
+        num_scenarios = len(file_list)
+    else:
+        num_scenarios = int(args['num_of_scenarios'])
+
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
     {
@@ -95,7 +101,7 @@ def test(args):
                 lane_line_detector=dict(num_lasers=12, distance=50),
                 side_detector=dict(num_lasers=160, distance=50)
             ),
-    }
+    },lamb = 5
     )
 
 
@@ -107,7 +113,7 @@ def test(args):
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
             
-            for i in range(199):
+            for i in range(91):
                 action, _ = model.predict(o, deterministic = True)
                 # action[1] = - action[-1]
                 o, r, d, info = env.step(action)
@@ -135,9 +141,10 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
+    parser.add_argument('--num_of_scenarios', type=str, default="900")
     parser.add_argument('--steps', '-st', type=int, default=int(1000000))
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    # main(args)
+    test(args)
