@@ -49,9 +49,9 @@ def get_current_ego_trajectory_old(waymo_env,i):
     
 
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
-    # position[:,1] = -position[:,1]
-    # heading = -heading
-    # velocity[:,1] = -velocity[:,1]
+    position[:,1] = -position[:,1]
+    heading = -heading
+    velocity[:,1] = -velocity[:,1]
     
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
@@ -167,9 +167,13 @@ def main(args):
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
                 # ac = np.array([1.0,1.0]) #dummy action
                 lon_acc, lat_acc = acc[t,:]
-                
+                ## xinyi: ok we need to verify that it is a good mapping here jul 7th
+                # TODO: verify if the mapped action will follow ego recorded trajectory
                 ac = estimate_action(map, speed[t], lat_acc, lon_acc)
-                obs, reward, done, info = env.step(ac) # whatever the input action is overwrited to be zero
+
+                
+                # whatever the input action is overwrited to be zero (due to the replay policy)
+                obs, reward, done, info = env.step(ac) 
                 obs_rec = np.concatenate((obs_rec, obs.reshape(1, obs.shape[0])))
                 ac_rec = np.concatenate((ac_rec, ac.reshape(1, ac.shape[0]))) 
                 re_rec = np.concatenate((re_rec, np.array([reward])))
@@ -178,7 +182,7 @@ def main(args):
 
         
             num_scenarios_per_buffer = 10
-            num_dps_per_scenarios = 91
+            num_dps_per_scenarios = acc.shape[0]
             num_dps_per_buffer = num_scenarios_per_buffer * num_dps_per_scenarios
             max_num_dps = num_scenarios * num_dps_per_scenarios
             
