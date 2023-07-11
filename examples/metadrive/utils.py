@@ -4,6 +4,7 @@ from gym import spaces
 from metadrive.envs.real_data_envs.waymo_env import WaymoEnv
 from metadrive.envs.metadrive_env import MetaDriveEnv
 import numpy as np
+from metadrive.component.vehicle_model.bicycle_model import BicycleModel
 
 
 
@@ -47,6 +48,17 @@ class AddCostToRewardEnv_base(MetaDriveEnv):
         new_reward = reward - self._lamb * info['cost']
         info["re"] = reward
         return state, new_reward, done, info
+
+
+class BicycleModelEgoEnv_base(MetaDriveEnv):
+    # In this BicycleModelEgoEnv_base, we overwrite the pybullet simulated dynamics to a simple bicycleModel
+    # action space becomes [steer angle, acc]
+    def step(self, actions):
+        actions = self._preprocess_actions(actions)
+        engine_info = self._step_simulator(actions)
+        o, r, d, i = self._get_step_return(actions, engine_info=engine_info)
+        return o, r, d, i
+
 
 ############## query map shit #########################
 
@@ -140,6 +152,14 @@ def get_acc_from_vel(velocity,ts, smooth_acc = False):
 
         acc[:,0] = savgol_filter(acc[:,0], 20, 3)
         acc[:,1] = savgol_filter(acc[:,1], 20, 3)
+
+    return acc
+
+
+def get_acc_from_speed(speed,ts, smooth_acc = False):
+    acc = np.array([calculate_diff_from_whole_trajectory(speed, ts, i) for i in range(speed.shape[0])] )
+    if smooth_acc:
+        acc = savgol_filter(acc, 20, 3)
 
     return acc
 

@@ -49,8 +49,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
     acc = get_acc_from_speed(speed, ts)
     heading_speed = get_acc_from_speed(heading, ts)
 
-    print("max speed, avg speed, max lat acc, max lon acc, min lon acc = {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}".format(
-           np.max(speed), 3, np.mean(speed), 3, np.max(np.abs(local_acc[:,1])), 3, np.max(local_acc[:,0]), 3, np.min(local_acc[:,0]), 3))
+    print("max speed, avg speed, acc range,  heading range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
+           np.max(speed), 3, np.mean(speed), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3))
     
 
     plot_global_vs_local_vel = False
@@ -274,6 +274,7 @@ def main(args):
     for seed in range(num_scenarios):
         # try: 
             env.reset(force_seed=seed)
+            # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
             speed = np.linalg.norm(vel, axis = 1)
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
