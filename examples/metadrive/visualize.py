@@ -43,7 +43,7 @@ def visualize_h5py(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/one_pack.h5py')
+    parser.add_argument('--h5py_path', type=str, default='~/src/data/metadrive/saved_bc_policy')
 
     args = parser.parse_args()
     args = vars(args)
