@@ -61,8 +61,8 @@ def main(args):
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-    # Save a checkpoint every 1000 steps
-    checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=args['output_dir'],
+    # Save a checkpoint every given steps
+    checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
                                          name_prefix=exp_name)
     
     model.learn(args['steps'], data_dir = args['h5py_path'], callback=checkpoint_callback)
@@ -182,7 +182,8 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
-    parser.add_argument('--steps', '-st', type=int, default=int(10000))
+    parser.add_argument('--steps', '-st', type=int, default=int(100000))
+    parser.add_argument('--save_freq', type=int, default=int(10000))
     args = parser.parse_args()
     args = vars(args)
 
