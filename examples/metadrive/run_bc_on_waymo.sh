@@ -13,4 +13,7 @@ python examples/metadrive/collect_h5py_from_pkl.py --pkl_dir examples/metadrive/
 
 python examples/metadrive/run_bc_waymo.py --pkl_dir examples/metadrive/pkl_9 --h5py_path examples/metadrive/h5py/one_pack_training.h5py --output_dir examples/metadrive/saved_bc_policy
 
+# alternatively on server:
+python examples/metadrive/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --h5py_path ~/src/data/metadrive/h5py/bc_9_900.h5py --output_dir examples/metadrive/saved_bc_policy --num_of_scenarios 900
+
 
