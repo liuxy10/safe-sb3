@@ -133,7 +133,7 @@ def main(args):
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
             speed = np.linalg.norm(vel, axis = 1)
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
-                action = np.array([heading, acc]) #
+                action = np.array([heading[t], acc[t]]) #
 
                 # whatever the input action is overwrited to be zero (due to the replay policy)
                 obs, reward, done, info = env.step(action) 
