@@ -363,7 +363,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--tfrecord_dir', type=str, default='examples/metadrive/tfrecord_20')
-    parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl')
+    parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_20')
 
     args = parser.parse_args()
     args = vars(args)

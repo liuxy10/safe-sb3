@@ -140,7 +140,7 @@ def one_round_exp(env, lat_act, lon_act, base_speed, stable_time, collect_time_w
 
     # speed visualization
 
-    fit_visualization = (lon_sse >= 3)
+    # fit_visualization = (lon_sse >= 3)
     if fit_visualization:
         plt.figure()
         # Plot time versus acceleration
@@ -231,7 +231,7 @@ def collect_action_acc_grid_data(args):
         for j in range(num_dp_per_dim): # action 1
             for base_speed in speeds:
             # for base_speed in [20]:
-                lat_acc, lon_acc, lat_sse, lon_sse = one_round_exp(env, lats[i], lons[j], base_speed, stable_time, collect_window_width, False, True)
+                lat_acc, lon_acc, lat_sse, lon_sse = one_round_exp(env, lats[i], lons[j], base_speed, stable_time, collect_window_width, True, True)
                 log = [lats[i], lons[j], base_speed, lat_acc, lon_acc, lat_sse, lon_sse]
                 print("lat action input, lon action input, base speed, lat_acc, lon_acc, lat_sse, lon_sse= {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}".format(log[0], 3, log[1], 3, log[2], 3, log[3], 3, log[4], 3, log[5], 3, log[6], 3))
                 log_data.append([lats[i], lons[j], base_speed, lat_acc, lon_acc, lat_sse, lon_sse])
