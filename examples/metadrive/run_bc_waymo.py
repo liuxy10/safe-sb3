@@ -7,11 +7,13 @@ from datetime import datetime
 import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
+from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
+
 
 WAYMO_SAMPLING_FREQ = 10
 
@@ -32,36 +34,32 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":ReplayEgoCarPolicy,
+        "agent_policy":EnvInputHeadingAccPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         
         "reactive_traffic": False,
-                # "vehicle_config": dict(
-                #     show_lidar=True,
-                #     # no_wheel_friction=True,
-                #     lidar=dict(num_lasers=0))
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
                 lidar=dict(num_lasers=120, distance=50, num_others=4),
                 lane_line_detector=dict(num_lasers=12, distance=50),
                 side_detector=dict(num_lasers=160, distance=50)
             ),
-    }, lamb=5.
+    }, 
     )
 
 
-    env.seed(0)
+    env.seed(args["env_seed"])
 
-    exp_name = "bc-waymo-es" + str(args["env_seed"]) + "_PPO"
+    exp_name = "bc-waymo-es" + str(args["env_seed"])
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     
-    model.learn(total_timesteps=args['steps'])
+    model.learn(total_timesteps=args['steps'], data_dir = args['h5py_path'])
 
     model.save(os.path.join(args['output_dir'], exp_name))
     # loaded_agent =PPO.load(exp_name)
@@ -90,7 +88,7 @@ def test(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        # "agent_policy":ReplayEgoCarPolicy,
+        "agent_policy":EnvInputHeadingAccPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
@@ -106,13 +104,13 @@ def test(args):
                 lane_line_detector=dict(num_lasers=12, distance=50),
                 side_detector=dict(num_lasers=160, distance=50)
             ),
-    },lamb = 5
+    },
     )
 
 
-    env.seed(0)
+    env.seed(args["env_seed"])
     
-    exp_name = "bc-waymo-es" + str(args["env_seed"]) + "_PPO"
+    exp_name = "bc-waymo-es" + str(args["env_seed"])
     
     model = BC.load(os.path.join(args['output_dir'], exp_name))
     for seed in range(0, num_scenarios):
@@ -183,5 +181,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
