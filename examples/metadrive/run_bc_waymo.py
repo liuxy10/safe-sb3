@@ -53,7 +53,7 @@ def main(args):
 
     env.seed(0)
 
-    exp_name = "bc-waymo-es" + str(args["env_seed"])
+    exp_name = "bc-waymo-es" + str(args["env_seed"]) + "_PPO"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
 
@@ -109,7 +109,7 @@ def test(args):
 
     env.seed(0)
     
-    exp_name = "bc-waymo-es" + str(args["env_seed"])
+    exp_name = "bc-waymo-es" + str(args["env_seed"]) + "_PPO"
     
     model =PPO.load(os.path.join(args['output_dir'], exp_name))
     for seed in range(0, num_scenarios):
