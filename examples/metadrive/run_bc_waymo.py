@@ -14,6 +14,9 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
 
+from stable_baselines3.common.callbacks import CheckpointCallback
+
+
 
 WAYMO_SAMPLING_FREQ = 10
 
@@ -58,10 +61,12 @@ def main(args):
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+    # Save a checkpoint every 1000 steps
+    checkpoint_callback = CheckpointCallback(save_freq=1000, save_path=args['output_dir'],
+                                         name_prefix=exp_name)
     
-    model.learn(total_timesteps=args['steps'], data_dir = args['h5py_path'])
-
-    model.save(os.path.join(args['output_dir'], exp_name))
+    model.learn(args['steps'], data_dir = args['h5py_path'], callback=checkpoint_callback)
+        
     # loaded_agent =PPO.load(exp_name)
 
     
@@ -177,7 +182,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
-    parser.add_argument('--steps', '-st', type=int, default=int(1000000))
+    parser.add_argument('--steps', '-st', type=int, default=int(10000))
     args = parser.parse_args()
     args = vars(args)
 

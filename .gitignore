@@ -22,6 +22,7 @@ git_rewrite_commit_history.sh
 examples/metadrive/tfrecord_9/*
 examples/metadrive/tfrecord_20/*
 examples/metadrive/h5py/*
+examples/metadrive/saved_bc_policy/*
 
 # Setuptools distribution and build folders.
 /dist/
