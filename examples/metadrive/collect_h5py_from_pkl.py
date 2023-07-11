@@ -5,8 +5,9 @@ import numpy as np
 from metadrive.envs.real_data_envs.waymo_env import WaymoEnv
 from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
+from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
-from utils import get_acc_from_vel, get_local_from_heading
+from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed
 
 import tqdm
 import h5py
@@ -23,15 +24,6 @@ from visualize_map import plot_reachable_region
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
-# def get_current_ego_trajectory(waymo_env):
-#     data = waymo_env.engine.data_manager.current_scenario
-
-#     id = data['metadata']['sdc_id']
-#     position = np.array(data['tracks'][id]['state']['position'])
-#     heading = np.array(data['tracks'][id]['state']['heading'])
-#     velocity = np.array(data['tracks'][id]['state']['velocity'])
-#     ts = np.array(data['metadata']['ts'])
-#     return ts, position, velocity, heading
 
 def get_current_ego_trajectory_old(waymo_env,i):
     data = waymo_env.engine.data_manager.get_case(i)
@@ -46,8 +38,6 @@ def get_current_ego_trajectory_old(waymo_env,i):
     speed = np.linalg.norm(velocity, axis = 1)
     
     
-    
-
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
     position[:,1] = -position[:,1]
     heading = -heading
@@ -56,6 +46,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
     local_acc = get_acc_from_vel(local_vel, ts)
+    acc = get_acc_from_speed(speed, ts)
+    heading_speed = get_acc_from_speed(heading, ts)
 
     print("max speed, avg speed, max lat acc, max lon acc, min lon acc = {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}, {:.{}f}".format(
            np.max(speed), 3, np.mean(speed), 3, np.max(np.abs(local_acc[:,1])), 3, np.max(local_acc[:,0]), 3, np.min(local_acc[:,0]), 3))
@@ -75,14 +67,169 @@ def get_current_ego_trajectory_old(waymo_env,i):
         plt.ylabel('local/global Velocity')
         plt.title("Time vs. local/global Velocity")
         plt.show()
+    
+    plot_acc = False
+    if plot_acc:
+        plt.figure()
+        # Plot time versus acc
+        plt.scatter(ts, acc, label = 'acc')
+        plt.scatter(ts, heading_speed, label = 'heading')
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('acc')
+        plt.title("Time vs. acc")
+        plt.show()
 
-    return ts, position, velocity, local_acc, heading
 
+    return ts, position, velocity, acc, heading
+
+
+def test(args):
+    file_list = os.listdir(args['pkl_dir'])
+    if args['num_of_scenarios'] == 'ALL':
+        num_scenarios = len(file_list)
+    else:
+        num_scenarios = int(args['num_of_scenarios'])
+        # num_scenarios = 10 
+    print("num of scenarios: ", num_scenarios) 
+    env = AddCostToRewardEnv(
+    {
+        "manual_control": False,
+        "no_traffic": False,
+        "agent_policy":ReplayEgoCarPolicy,
+        # "agent_policy":EnvInputHeadingAccPolicy,
+
+        "waymo_data_directory":args['pkl_dir'],
+        "case_num": num_scenarios,
+        "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
+        
+        "reactive_traffic": False,
+                # "vehicle_config": dict(
+                #     show_lidar=True,
+                #     # no_wheel_friction=True,
+                #     lidar=dict(num_lasers=0))
+                "vehicle_config": dict(
+                # no_wheel_friction=True,
+                lidar=dict(num_lasers=120, distance=50, num_others=4),
+                lane_line_detector=dict(num_lasers=12, distance=50),
+                side_detector=dict(num_lasers=160, distance=50)
+            ),
+    }
+    )
+    
+    compare_waymo_tracking = True
+    
+   
+    
+    
+    # map = np.load(args['map_dir'])[0]
+    
+
+    for seed in range(num_scenarios):
+        
+        # try: 
+        env.reset(force_seed=seed)
+        policy = EnvInputHeadingAccPolicy(obj = env.engine.agent_manager.active_agents['default_agent'],
+                                          seed =seed,
+                                          disable_clip=True)
+        # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
+        ts, pos, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
+        speed = np.linalg.norm(vel, axis = 1)
+
+        pre_actions = []
+        post_actions = []
+        for t in tqdm.trange(acc.shape[0], desc="Timestep"):
+            pre_action = np.array([heading[t], acc[t]]) #waymo heading and waymo acceleration
+            pre_actions.append(pre_action)
+            env.step(pre_action)
+            ## xinyi: ok we need to verify that it is a good mapping here jul 7th
+            # TODO: verify if the mapped action will follow ego recorded trajectory
+        
+            post_action= policy.act('default_agent')
+            post_actions.append(post_action)
+        pre_actions = np.array(pre_actions)
+        post_actions = np.array(post_actions)
+        
+        plot_act = True
+        if plot_act:
+            plt.figure()
+            # Plot time versus acc
+            plt.scatter(ts, pre_actions[:,0], label = 'pre steering')
+            plt.scatter(ts, pre_actions[:,1], label = 'pre acceleration')
+            plt.plot(ts, post_actions[:,0], '-',label = 'post steering')
+            plt.plot(ts, post_actions[:,1], '-',label = 'post acceleration')
+            plt.legend()
+            plt.xlabel('Time')
+            plt.ylabel('acc')
+            plt.title("Time vs. acc")
+            plt.show()
+        
+        if compare_waymo_tracking:
+            env.close()
+            env_parallel = AddCostToRewardEnv(
+            {
+                "manual_control": False,
+                "no_traffic": False,
+                # "agent_policy":ReplayEgoCarPolicy,
+                "agent_policy":EnvInputHeadingAccPolicy,
+
+                "waymo_data_directory":args['pkl_dir'],
+                "case_num": num_scenarios,
+                "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
+                
+                "reactive_traffic": False,
+                        # "vehicle_config": dict(
+                        #     show_lidar=True,
+                        #     # no_wheel_friction=True,
+                        #     lidar=dict(num_lasers=0))
+                        "vehicle_config": dict(
+                        # no_wheel_friction=True,
+                        lidar=dict(num_lasers=120, distance=50, num_others=4),
+                        lane_line_detector=dict(num_lasers=12, distance=50),
+                        side_detector=dict(num_lasers=160, distance=50)
+                    ),
+            }
+            )
+
+            env_parallel.reset(force_seed=seed)
+            pos_track, speed_track, acc_track, heading_track = [],[],[],[]
+
+            for t in tqdm.trange(acc.shape[0], desc="Timestep"):
+                env_parallel.step(post_action)
+                track_agent = env_parallel.engine.agent_manager.active_agents['default_agent']
+                pos_track.append(track_agent.position)
+                speed_track.append(np.linalg.norm(track_agent.velocity))
+                heading_track.append(track_agent.heading_theta)
+            
+            pos_track = np.array(pos_track)
+
+            fig = plt.figure()
+            ax1 = fig.add_subplot(311)
+            ax2 = fig.add_subplot(312)
+            ax3 = fig.add_subplot(313)
+            # Plot time versus acc
+            ax1.scatter(pos[:,0], pos[:,1], label = 'waymo pos')
+            ax2.scatter(ts, speed, label = 'waymo speed')
+            ax3.scatter(ts, heading, label = 'waymo heading')
+            ax1.scatter(pos_track[:,0], pos_track[:,1], label = 'track pos')
+            ax2.scatter(ts, speed_track, label = 'track speed')
+            ax3.scatter(ts, heading_track, label = 'track heading')
+            ax1.legend()
+            ax2.legend()
+            ax3.legend()
+            ax1.set_xlabel('Time')
+            ax2.set_xlabel('Time')
+            ax3.set_xlabel('Time')
+            ax1.set_ylabel('position x/y')
+            ax2.set_ylabel('speed')
+            ax3.set_ylabel('heading')
+            # ax1.set_title("Time vs. position")
+            plt.show()
+
+            env_parallel.close()
+            
 
 def main(args):
-
-
-
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
         num_scenarios = len(file_list)
@@ -122,60 +269,20 @@ def main(args):
 
     
     
-    map = np.load(args['map_dir'])[0]
+    # map = np.load(args['map_dir'])[0]
 
     for seed in range(num_scenarios):
-        try: 
+        # try: 
             env.reset(force_seed=seed)
-            # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
             speed = np.linalg.norm(vel, axis = 1)
-
-            plot_traj_range = False
-            if plot_traj_range:
-                plot_reachable_region(speed, acc[:,1], acc[:,0])
-            
-            
-            plot_slip_angle_gap =False
-            if plot_slip_angle_gap:
-                plt.figure()
-                plt.plot(ts, np.arctan2(vel[:,1],vel[:,0]), label = 'vel dir')
-                plt.plot(ts, heading, label = 'heading')
-                plt.legend()
-                plt.xlabel('Time')
-                plt.ylabel('heading (rad) and vel_direction (rad)')
-                plt.show()
-            
-            plot_acc_vel = False
-            if plot_acc_vel:
-                plt.figure()
-                plt.plot(ts, acc[:,0], ts, acc[:,1])
-                plt.legend()
-                plt.xlabel('Time')
-                plt.ylabel('Acceleration')
-                plt.title('Time vs. Acceleration')
-                
-                plt.figure()
-                plt.plot(ts, vel[:,0], ts, vel[:,1])
-                plt.legend()
-                plt.xlabel('Time')
-                plt.ylabel('Velocity')
-                plt.title('Time vs. Velocity')
-                plt.show()
-
-            
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
-                # ac = np.array([1.0,1.0]) #dummy action
-                lon_acc, lat_acc = acc[t,:]
-                ## xinyi: ok we need to verify that it is a good mapping here jul 7th
-                # TODO: verify if the mapped action will follow ego recorded trajectory
-                ac = estimate_action(map, speed[t], lat_acc, lon_acc)
+                action = np.array([heading, acc]) #
 
-                
                 # whatever the input action is overwrited to be zero (due to the replay policy)
-                obs, reward, done, info = env.step(ac) 
+                obs, reward, done, info = env.step(action) 
                 obs_rec = np.concatenate((obs_rec, obs.reshape(1, obs.shape[0])))
-                ac_rec = np.concatenate((ac_rec, ac.reshape(1, ac.shape[0]))) 
+                
                 re_rec = np.concatenate((re_rec, np.array([reward])))
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
@@ -191,7 +298,7 @@ def main(args):
 
                     f = h5py.File(args['h5py_path'], 'w') 
                     f.create_dataset("observation",(num_dps_per_buffer, obs.shape[0]), maxshape=(max_num_dps, obs.shape[0]), data=obs_rec)
-                    f.create_dataset("action", (num_dps_per_buffer, ac.shape[0]), maxshape=(max_num_dps, ac.shape[0]), data=ac_rec)
+                    f.create_dataset("action", (num_dps_per_buffer, action.shape[0]), maxshape=(max_num_dps, action.shape[0]), data=ac_rec)
                     f.create_dataset("reward", (num_dps_per_buffer, ), maxshape=(max_num_dps,), data=re_rec)
                     f.create_dataset("terminal", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=terminal_rec)
                     f.create_dataset("cost", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=cost_rec)
@@ -237,9 +344,9 @@ def main(args):
                     print("[buffer] done round: "+ str(seed))
 
 
-        except:
-            print("skipping traj "+str(seed))
-            continue
+        # except:
+        #     print("skipping traj "+str(seed))
+        #     continue
         
             
 
@@ -255,10 +362,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
-    parser.add_argument('--num_of_scenarios', type=str, default='900')
-    parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
+    parser.add_argument('--num_of_scenarios', type=str, default='10')
+    # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)
 
     # main(args)
     main(args)
+    # test(args)
