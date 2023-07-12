@@ -1,4 +1,4 @@
-from stable_baselines3 import BC
+
 import gym
 
 import h5py
@@ -8,7 +8,7 @@ import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
-
+from stable_baselines3 import BC
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv

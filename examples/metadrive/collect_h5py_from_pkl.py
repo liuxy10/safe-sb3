@@ -1,9 +1,6 @@
 
 import numpy as np
 
-# from metadrive.engine.asset_loader import AssetLoader
-from metadrive.envs.real_data_envs.waymo_env import WaymoEnv
-from metadrive.policy.idm_policy import WaymoIDMPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
@@ -39,9 +36,9 @@ def get_current_ego_trajectory_old(waymo_env,i):
     
     
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
-    position[:,1] = -position[:,1]
-    heading = -heading
-    velocity[:,1] = -velocity[:,1]
+    # position[:,1] = -position[:,1]
+    # heading = heading
+    # velocity[:,1] = -velocity[:,1]
     
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
