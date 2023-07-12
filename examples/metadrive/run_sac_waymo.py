@@ -7,7 +7,7 @@ from datetime import datetime
 import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
-from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
+from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy, EnvInputPolicy
 from stable_baselines3 import BC
 from stable_baselines3 import SAC
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -93,7 +93,8 @@ def test(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":EnvInputHeadingAccPolicy,
+        # "agent_policy":EnvInputHeadingAccPolicy,
+        "agent_policy":EnvInputPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
