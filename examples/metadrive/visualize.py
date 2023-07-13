@@ -87,7 +87,7 @@ def visualize_bc_prediction(args):
     
     exp_name = "bc-waymo-es" + str(args["env_seed"])
     
-    model = BC.load(os.path.join(args['output_dir'], exp_name))
+    model = BC.load(args['model_path'])
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
             #ts, position, velocity, acc, heading
@@ -96,22 +96,21 @@ def visualize_bc_prediction(args):
             
             pos_pred = np.zeros_like(pos_rec)
             action_pred = np.zeros_like(pos_rec)
+            actual_heading = np.zeros_like(ts)
 
             cum_rew, cum_cost = 0,0
             for i in range(len(ts)):
                 action, _ = model.predict(o, deterministic = True)
+                o, r, d, info = env.step(action)
+                actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
                 pos_cur = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
                 vel_cur = np.array(env.engine.agent_manager.active_agents['default_agent'].velocity)
                 pos_pred [i,:] = pos_cur
                 action_pred [i,:] = action
-                o, r, d, info = env.step(action)
                 cum_rew += r
                 cum_cost += info['cost']
-                # env.render("topdown")
-                # env.render(mode="rgb_array")
                 print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
                 
-            
             plot_comparison = True
             action_pred = np.array(action_pred)
             if plot_comparison:
@@ -123,10 +122,12 @@ def visualize_bc_prediction(args):
                 # ax1.plot(pos_pred[:,0], pos_pred[:,1], label = 'test')
                 # ax1.plot(pos_rec[:,0], pos_rec[:,1], label = 'record')
                 ax1.plot(ts, acc, label = 'waymo acc')
-                ax1.plot(ts, action_pred[:,1], label = 'data acc')
+                ax1.plot(ts, action_pred[:,1], label = 'bc pred acc')
                 ax2.plot(ts, heading, label = 'waymo heading')
-                ax2.plot(ts, action_pred[:,0], label = 'data heading')
+                ax2.plot(ts, action_pred[:,0], label = 'bc pred heading')
+                ax2.plot(ts, actual_heading, label = 'actual heading' )
                 ax1.legend()
+                ax2.legend()
                 # ax1.axis('equal')
                 ax1.set_xlabel('time')
                 ax1.set_ylabel('acceleration')
@@ -134,6 +135,10 @@ def visualize_bc_prediction(args):
                 ax2.set_ylabel('heading')
                 plt.title("recorded action vs test predicted action")
                 plt.show()
+
+            
+
+                
 
 
 
@@ -159,7 +164,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
+    parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/saved_bc_policy/bc-waymo-es0_500000_steps.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")

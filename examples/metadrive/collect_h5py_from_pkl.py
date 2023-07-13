@@ -36,9 +36,10 @@ def get_current_ego_trajectory_old(waymo_env,i):
     
     
     # accoroding to 0.2.6 metadrive waymo_traffic_manager.py, the coodination shift is implemented here:
-    # position[:,1] = -position[:,1]
-    # heading = heading
-    # velocity[:,1] = -velocity[:,1]
+    position[:,1] = -position[:,1]
+    heading = -heading
+    velocity[:,1] = -velocity[:,1]
+    
     
     # revised to be consistant with collect_action_acc_pair.py
     local_vel = get_local_from_heading(velocity, heading)
