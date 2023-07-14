@@ -43,8 +43,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
     
     
     # revised to be consistant with collect_action_acc_pair.py
-    local_vel = get_local_from_heading(velocity, heading)
-    local_acc = get_acc_from_vel(local_vel, ts)
+    # local_vel = get_local_from_heading(velocity, heading) # not used
+    # local_acc = get_acc_from_vel(local_vel, ts)
     acc = get_acc_from_speed(speed, ts)
     heading_speed = get_acc_from_speed(heading, ts)
 
@@ -58,8 +58,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
         # Plot time versus vel
         plt.plot(ts, velocity[:,0], label = 'global x')
         plt.plot(ts, velocity[:,1], label = 'global y')
-        plt.scatter(ts, local_vel[:,0], label = 'local lon')
-        plt.scatter(ts, local_vel[:,1], label = 'local lat')
+        # plt.scatter(ts, local_vel[:,0], label = 'local lon')
+        # plt.scatter(ts, local_vel[:,1], label = 'local lat')
         # plt.plot(ts, vels[:,0], ts, vels[:,1], label = 'global')
         plt.legend()
         plt.xlabel('Time')

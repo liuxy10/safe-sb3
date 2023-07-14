@@ -151,6 +151,7 @@ class BC(OffPolicyAlgorithm):
             if use_diff_action_space:
                 heading_rates = f['heading_rates'][:]
                 acc = f['accelerations'][:]
+                print("np.mean(acc), np.min(acc), np.max(acc) = ", np.mean(acc), np.min(acc), np.max(acc))
                 ac = np.concatenate((heading_rates, acc), axis = 1)
             else:
                 headings= f['headings'][:]

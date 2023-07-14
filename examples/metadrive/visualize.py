@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 # what about the data from h5py
 import h5py
 
+# import asciiplotlib as apl
+
+# specification for 
+
 WAYMO_SAMPLING_FREQ = 10
 
 def visualize_h5py(args):
@@ -51,16 +55,25 @@ def visualize_h5py(args):
 
     plot_hist_candidate_actions = True
     if plot_hist_candidate_actions:
+        plot_using_terminal = False
         dataset_names = ['headings', 'heading_rates','speeds','accelerations']
-        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-        for i, ax in enumerate(axes.flatten()):
-            data_name = dataset_names[i]
-            data = np.array(hf[data_name])
-            ax.hist(data, bins='auto')
-            ax.set_title(data_name)
-            ax.set_xlabel('Value')
-            ax.set_ylabel('Frequency')
-        plt.show()
+        if plot_using_terminal: 
+            for i, data_name in enumerate(dataset_names):
+                data = hf[data_name]
+                plot_histogram(data, data_name)
+
+        else:
+            fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+            for i, ax in enumerate(axes.flatten()):
+                data_name = dataset_names[i]
+                data = np.array(hf[data_name])
+                # if data_name == 'heading_rates':
+                #     # print(data)
+                ax.hist(data, bins='auto')
+                ax.set_title(data_name)
+                ax.set_xlabel('Value')
+                ax.set_ylabel('Frequency')
+            plt.show()
 
 
 
@@ -177,7 +190,7 @@ def visualize_bc_prediction(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
+    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/bc_9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/sac-waymo-es0_770000_steps-heading.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)

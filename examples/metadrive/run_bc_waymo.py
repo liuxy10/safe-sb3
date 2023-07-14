@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from metadrive.policy.replay_policy import ReplayEgoCarPolicy
+from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 from stable_baselines3 import BC
 from stable_baselines3 import PPO
@@ -37,11 +37,12 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":EnvInputHeadingAccPolicy,
+        # "agent_policy":EnvInputHeadingAccPolicy,
+        "agent_policy":PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        
+        "use_render": True,
         "reactive_traffic": False,
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
@@ -51,8 +52,6 @@ def main(args):
             ),
     }, 
     )
-
-
     env.seed(args["env_seed"])
 
     exp_name = "bc-waymo-es" + str(args["env_seed"])
@@ -65,7 +64,12 @@ def main(args):
     checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
                                          name_prefix=exp_name)
     
-    model.learn(args['steps'], data_dir = args['h5py_path'], callback=checkpoint_callback)
+    model.learn(
+                args['steps'], 
+                data_dir = args['h5py_path'], 
+                callback=checkpoint_callback, 
+                use_diff_action_space = args['use_diff_action_space']
+                )
         
     # loaded_agent =PPO.load(exp_name)
 
@@ -176,9 +180,10 @@ def test(args):
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/one_pack_from_tfrecord.h5py')
+    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
+    parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
