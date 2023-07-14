@@ -26,14 +26,11 @@ def visualize_h5py(args):
     for name in dataset_names:
         print(name)
 
-    re = np.array(hf["reward"])
-    cost = np.array(hf["cost"])
-    ac = np.array(hf["action"])
-    heading = ac[:,0]
-    acc = ac[:,1]
-
     plot_rew_cost_versus_time = False
     if plot_rew_cost_versus_time:
+        re = np.array(hf["reward"])
+        cost = np.array(hf["cost"])
+        ac = np.array(hf["action"])
         plt.figure()
         # Plot time versus acceleration
         plt.plot(range(len(re)), re, label = "reward")
@@ -52,53 +49,18 @@ def visualize_h5py(args):
         plt.title('TimeStamp vs. action')
         plt.show()
 
-    plot_hist = True
-    if plot_hist:
-        datasets = [heading, acc]
-        dataset_names = ['heading', 'acceleration']
-        for i,data in enumerate(datasets):
-            dataset_name = dataset_names[i]
-            plt.hist(data, bins='auto')
-            plt.title(dataset_name)
-            plt.xlabel('Value')
-            plt.ylabel('Frequency')
-            plt.show()
-
-
-def plot_hist_of_candidate_action_vars(waymo_env, num_scenarios):
-    waymo_env.reset()
-    # cadidates are heading/heading rate, speed/acc
-    headings, heading_rates, speeds, accelerations = np.array([]),np.array([]),np.array([]),np.array([])
-    for i in range(num_scenarios):
-        _, _, vel, acc, hd, hd_rate = get_current_ego_trajectory_old(waymo_env,i)
-        spd = np.linalg.norm(vel, axis = 1)
-        headings = np.concatenate([headings, hd], axis=0).flatten()
-        heading_rates = np.concatenate([heading_rates, hd_rate], axis=0).flatten()
-        speeds = np.concatenate([speeds, spd], axis=0).flatten()
-        accelerations = np.concatenate([accelerations, acc], axis=0).flatten()
-    
-    name_dat_dict = {
-                    "headings":headings, 
-                    "heading_rates": heading_rates, 
-                    "speeds": speeds, 
-                    "accelerations":accelerations
-                    }
-
-    for dataset_name in name_dat_dict.keys():
-        plt.figure()
-        data = name_dat_dict[dataset_name]
-        plt.hist(data, bins='auto')
-        plt.title(dataset_name)
-        plt.xlabel('Value')
-        plt.ylabel('Frequency')
+    plot_hist_candidate_actions = True
+    if plot_hist_candidate_actions:
+        dataset_names = ['headings', 'heading_rates','speeds','accelerations']
+        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        for i, ax in enumerate(axes.flatten()):
+            data_name = dataset_names[i]
+            data = np.array(hf[data_name])
+            ax.hist(data, bins='auto')
+            ax.set_title(data_name)
+            ax.set_xlabel('Value')
+            ax.set_ylabel('Frequency')
         plt.show()
-    plt.show()
-
-
-
-    
-    
-
 
 
 
