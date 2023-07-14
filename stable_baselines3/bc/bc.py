@@ -128,13 +128,14 @@ class BC(OffPolicyAlgorithm):
         self: SelfBC,
         total_timesteps: int,
         data_dir: str,
+        use_diff_action_space: bool = True,
         callback: MaybeCallback = None,
         log_interval: int = 1,
         tb_log_name: str = "BC",
         reset_num_timesteps: bool = True,
         progress_bar: bool = False,
     ) -> SelfBC:
-        self.load_replay_buffer(data_dir)
+        self.load_replay_buffer(data_dir, use_diff_action_space)
         return super().learn(
             total_timesteps=total_timesteps,
             callback=callback,
@@ -144,10 +145,18 @@ class BC(OffPolicyAlgorithm):
             progress_bar=progress_bar,
         )
 
-    def load_replay_buffer(self, data_dir) -> None:
+    def load_replay_buffer(self, data_dir, use_diff_action_space = False) -> None:
         with h5py.File(data_dir, 'r') as f:
             obs = f['observation'][:]
-            ac = f['action'][:]
+            if use_diff_action_space:
+                heading_rates = f['heading_rates'][:]
+                acc = f['accelerations'][:]
+                ac = np.concatenate((heading_rates, acc), axis = 1)
+            else:
+                headings= f['headings'][:]
+                speeds = f['speeds'][:]
+                ac = np.concatenate((headings, speeds), axis = 1)
+
             reward = f['reward'][:]
             terminal = f['terminal'][:]
             cost = f['cost'][:]

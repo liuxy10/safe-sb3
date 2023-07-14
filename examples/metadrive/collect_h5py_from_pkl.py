@@ -122,11 +122,11 @@ def main(args):
     terminal_rec = np.ndarray((0, ), dtype=bool)
     cost_rec = np.ndarray((0, ))
 
-    ## add another four recorded data for action candidates
+    # ## add another four recorded data for action candidates
     headings, heading_rates, speeds, accelerations = np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1))
 
     for seed in range(num_scenarios):
-        try: 
+        # try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
@@ -143,10 +143,10 @@ def main(args):
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
 
             # add recorded candidates
-            headings = np.concatenate((headings, heading.reshape(heading.shape[0],1)))
-            heading_rates = np.concatenate((heading_rates, heading_rate.reshape(heading_rate.shape[0],1)))
-            speeds = np.concatenate((speeds, speed.reshape(speed.shape[0],1)))
-            accelerations = np.concatenate((accelerations, acc.reshape(acc.shape[0],1)))
+            headings = np.concatenate((headings, heading.reshape(-1,1)))
+            heading_rates = np.concatenate((heading_rates, heading_rate.reshape(-1,1)))
+            speeds = np.concatenate((speeds, speed.reshape(-1,1)))
+            accelerations = np.concatenate((accelerations, acc.reshape(-1,1)))
 
         
             num_scenarios_per_buffer = 10
@@ -164,6 +164,10 @@ def main(args):
                                 "heading_rates": heading_rates, 
                                 "speeds": speeds, 
                                 "accelerations":accelerations
+                                # "headings":heading.reshape(-1, 1), 
+                                # "heading_rates": heading_rate.reshape(-1, 1), 
+                                # "speeds": speed.reshape(-1, 1), 
+                                # "accelerations":acc.reshape(-1, 1)
                                 }
 
             if seed % num_scenarios_per_buffer == num_scenarios_per_buffer - 1:
@@ -173,7 +177,7 @@ def main(args):
                     for name in name_dat_dict.keys():
                         data = name_dat_dict[name]
                         if len(data.shape) == 2:
-                            f.create_dataset(name,(num_dps_per_buffer, data.shape[0]), maxshape=(max_num_dps, data.shape[0]), data=data)
+                            f.create_dataset(name,(num_dps_per_buffer, data.shape[1]), maxshape=(max_num_dps, data.shape[1]), data=data)
                         else: 
                             f.create_dataset(name, (num_dps_per_buffer, ), maxshape=(max_num_dps,), data=data)
 
@@ -218,9 +222,9 @@ def main(args):
                     print("[buffer] done round: "+ str(seed))
 
 
-        except:
-            print("skipping traj "+str(seed))
-            continue
+        # except:
+        #     print("skipping traj "+str(seed))
+        #     continue
         
             
 
