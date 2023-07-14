@@ -121,7 +121,7 @@ def test(args):
     model = SAC.load(os.path.join(args['output_dir'], exp_name))
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
-            ts, pos_rec, _, _,_ = get_current_ego_trajectory_old(env,seed)
+            ts, pos_rec, _, _,_,_ = get_current_ego_trajectory_old(env,seed)
             
             
             pos_test = []

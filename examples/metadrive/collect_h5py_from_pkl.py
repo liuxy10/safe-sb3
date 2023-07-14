@@ -22,6 +22,7 @@ WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
 
+
 def get_current_ego_trajectory_old(waymo_env,i):
     data = waymo_env.engine.data_manager.get_case(i)
     
@@ -78,8 +79,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
         plt.title("Time vs. acc")
         plt.show()
 
-
-    return ts, position, velocity, acc, heading
+    
+    return ts, position, velocity, acc, heading, heading_speed
 
 
 def main(args):
@@ -113,6 +114,7 @@ def main(args):
     }
     )
 
+     
     # init all recorded variables
     obs_rec = np.ndarray((0, ) + env.observation_space.shape)
     ac_rec = np.ndarray((0, ) + env.action_space.shape)
@@ -120,18 +122,17 @@ def main(args):
     terminal_rec = np.ndarray((0, ), dtype=bool)
     cost_rec = np.ndarray((0, ))
 
-    
-    
-    # map = np.load(args['map_dir'])[0]
+    ## add another four recorded data for action candidates
+    headings, heading_rates, speeds, accelerations = np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1))
 
     for seed in range(num_scenarios):
-        # try: 
+        try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
-            ts, _, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
+            ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
             speed = np.linalg.norm(vel, axis = 1)
             for t in tqdm.trange(acc.shape[0], desc="Timestep"):
-                action = np.array([heading[t], acc[t]]) #
+                action = np.array([heading[t], acc[t]]) 
 
                 # whatever the input action is overwrited to be zero (due to the replay policy)
                 obs, reward, done, info = env.step(action) 
@@ -141,21 +142,40 @@ def main(args):
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
 
+            # add recorded candidates
+            headings = np.concatenate((headings, heading.reshape(heading.shape[0],1)))
+            heading_rates = np.concatenate((heading_rates, heading_rate.reshape(heading_rate.shape[0],1)))
+            speeds = np.concatenate((speeds, speed.reshape(speed.shape[0],1)))
+            accelerations = np.concatenate((accelerations, acc.reshape(acc.shape[0],1)))
+
         
             num_scenarios_per_buffer = 10
             num_dps_per_scenarios = acc.shape[0]
             num_dps_per_buffer = num_scenarios_per_buffer * num_dps_per_scenarios
             max_num_dps = num_scenarios * num_dps_per_scenarios
-            
+
+            name_dat_dict = {
+                                "observation":obs_rec, 
+                                "action": ac_rec, 
+                                "reward": re_rec, 
+                                "terminal":terminal_rec,
+                                "cost":cost_rec,
+                                "headings":headings, 
+                                "heading_rates": heading_rates, 
+                                "speeds": speeds, 
+                                "accelerations":accelerations
+                                }
+
             if seed % num_scenarios_per_buffer == num_scenarios_per_buffer - 1:
                 if seed < num_scenarios_per_buffer:
-
+                    
                     f = h5py.File(args['h5py_path'], 'w') 
-                    f.create_dataset("observation",(num_dps_per_buffer, obs.shape[0]), maxshape=(max_num_dps, obs.shape[0]), data=obs_rec)
-                    f.create_dataset("action", (num_dps_per_buffer, action.shape[0]), maxshape=(max_num_dps, action.shape[0]), data=ac_rec)
-                    f.create_dataset("reward", (num_dps_per_buffer, ), maxshape=(max_num_dps,), data=re_rec)
-                    f.create_dataset("terminal", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=terminal_rec)
-                    f.create_dataset("cost", (num_dps_per_buffer,), maxshape=(max_num_dps,), data=cost_rec)
+                    for name in name_dat_dict.keys():
+                        data = name_dat_dict[name]
+                        if len(data.shape) == 2:
+                            f.create_dataset(name,(num_dps_per_buffer, data.shape[0]), maxshape=(max_num_dps, data.shape[0]), data=data)
+                        else: 
+                            f.create_dataset(name, (num_dps_per_buffer, ), maxshape=(max_num_dps,), data=data)
 
                     # Flush the changes to the file
                     f.flush()
@@ -166,14 +186,11 @@ def main(args):
                     re_rec = np.ndarray((0, ))
                     terminal_rec = np.ndarray((0, ), dtype=bool)
                     cost_rec = np.ndarray((0, ))
+                    headings, heading_rates, speeds, accelerations = np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1))
                 
                 else: 
                     f = h5py.File(args['h5py_path'], 'a') 
-                    name_dat_dict = {"observation":obs_rec, 
-                                "action": ac_rec, 
-                                "reward": re_rec, 
-                                "terminal":terminal_rec,
-                                "cost":cost_rec}
+                    
                     
                     for name in name_dat_dict.keys():
                         new_data = name_dat_dict[name]
@@ -194,13 +211,16 @@ def main(args):
                     re_rec = np.ndarray((0, ))
                     terminal_rec = np.ndarray((0, ), dtype=bool)
                     cost_rec = np.ndarray((0, ))
+                    headings, heading_rates, speeds, accelerations = np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1))
+
+    
 
                     print("[buffer] done round: "+ str(seed))
 
 
-        # except:
-        #     print("skipping traj "+str(seed))
-        #     continue
+        except:
+            print("skipping traj "+str(seed))
+            continue
         
             
 
@@ -275,7 +295,7 @@ if __name__ == "__main__":
 #                                           seed =seed,
 #                                           disable_clip=True)
 #         # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
-#         ts, pos, vel, acc, heading = get_current_ego_trajectory_old(env,seed)
+#         ts, pos, vel, acc, heading,_ = get_current_ego_trajectory_old(env,seed)
 #         speed = np.linalg.norm(vel, axis = 1)
 
 #         pre_actions = []

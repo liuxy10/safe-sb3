@@ -5,8 +5,7 @@ import numpy as np
 import os
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
-from stable_baselines3 import BC
-from stable_baselines3 import PPO
+from stable_baselines3 import BC, PPO, SAC
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
@@ -30,23 +29,77 @@ def visualize_h5py(args):
     re = np.array(hf["reward"])
     cost = np.array(hf["cost"])
     ac = np.array(hf["action"])
-    plt.figure()
-    # Plot time versus acceleration
-    plt.plot(range(len(re)), re, label = "reward")
-    plt.plot(range(len(cost)), cost, label = "cost")
-    plt.legend()
-    plt.xlabel('TimeStamp')
-    plt.ylabel('Reward/cost')
-    plt.title('TimeStamp vs. Reward/cost')
-    plt.figure()
-    # Plot time versus acceleration
-    plt.plot(np.arange(ac.shape[0]), ac[:,0], label = 'heading')
-    plt.plot(np.arange(ac.shape[0]), ac[:,1], label = 'acceleration')
-    plt.legend()
-    plt.xlabel('Time')
-    plt.ylabel('action value')
-    plt.title('TimeStamp vs. action')
+    heading = ac[:,0]
+    acc = ac[:,1]
+
+    plot_rew_cost_versus_time = False
+    if plot_rew_cost_versus_time:
+        plt.figure()
+        # Plot time versus acceleration
+        plt.plot(range(len(re)), re, label = "reward")
+        plt.plot(range(len(cost)), cost, label = "cost")
+        plt.legend()
+        plt.xlabel('TimeStamp')
+        plt.ylabel('Reward/cost')
+        plt.title('TimeStamp vs. Reward/cost')
+        plt.figure()
+        # Plot time versus acceleration
+        plt.plot(np.arange(ac.shape[0]), ac[:,0], label = 'heading')
+        plt.plot(np.arange(ac.shape[0]), ac[:,1], label = 'acceleration')
+        plt.legend()
+        plt.xlabel('Time')
+        plt.ylabel('action value')
+        plt.title('TimeStamp vs. action')
+        plt.show()
+
+    plot_hist = True
+    if plot_hist:
+        datasets = [heading, acc]
+        dataset_names = ['heading', 'acceleration']
+        for i,data in enumerate(datasets):
+            dataset_name = dataset_names[i]
+            plt.hist(data, bins='auto')
+            plt.title(dataset_name)
+            plt.xlabel('Value')
+            plt.ylabel('Frequency')
+            plt.show()
+
+
+def plot_hist_of_candidate_action_vars(waymo_env, num_scenarios):
+    waymo_env.reset()
+    # cadidates are heading/heading rate, speed/acc
+    headings, heading_rates, speeds, accelerations = np.array([]),np.array([]),np.array([]),np.array([])
+    for i in range(num_scenarios):
+        _, _, vel, acc, hd, hd_rate = get_current_ego_trajectory_old(waymo_env,i)
+        spd = np.linalg.norm(vel, axis = 1)
+        headings = np.concatenate([headings, hd], axis=0).flatten()
+        heading_rates = np.concatenate([heading_rates, hd_rate], axis=0).flatten()
+        speeds = np.concatenate([speeds, spd], axis=0).flatten()
+        accelerations = np.concatenate([accelerations, acc], axis=0).flatten()
+    
+    name_dat_dict = {
+                    "headings":headings, 
+                    "heading_rates": heading_rates, 
+                    "speeds": speeds, 
+                    "accelerations":accelerations
+                    }
+
+    for dataset_name in name_dat_dict.keys():
+        plt.figure()
+        data = name_dat_dict[dataset_name]
+        plt.hist(data, bins='auto')
+        plt.title(dataset_name)
+        plt.xlabel('Value')
+        plt.ylabel('Frequency')
+        plt.show()
     plt.show()
+
+
+
+    
+    
+
+
 
 
 def visualize_bc_prediction(args):
@@ -85,13 +138,13 @@ def visualize_bc_prediction(args):
 
     env.seed(args["env_seed"])
     
-    exp_name = "bc-waymo-es" + str(args["env_seed"])
     
-    model = BC.load(args['model_path'])
+    # model = BC.load(args['model_path'])
+    model = SAC.load(args['model_path'])
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
             #ts, position, velocity, acc, heading
-            ts, pos_rec,_, acc, heading = get_current_ego_trajectory_old(env,seed)
+            ts, pos_rec,_, acc, heading,_ = get_current_ego_trajectory_old(env,seed)
             
             
             pos_pred = np.zeros_like(pos_rec)
@@ -164,11 +217,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/saved_bc_policy/bc-waymo-es0_500000_steps.zip')
+    parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/sac-waymo-es0_770000_steps-heading.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
 
     args = parser.parse_args()
     args = vars(args)
-    visualize_bc_prediction(args)
+    # visualize_bc_prediction(args)
+    visualize_h5py(args)
