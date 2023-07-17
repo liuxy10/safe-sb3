@@ -163,7 +163,27 @@ def get_acc_from_speed(speed,ts, smooth_acc = False):
 
     return acc
 
+def get_rate_from_heading(heading,ts, smooth_rate = False):
+    MAX_HEADING_RATE = np.pi/2 # random 
+    dt = 0.1
+    heading = get_continuous_heading(heading, dt, MAX_HEADING_RATE)
+    rate = np.array([calculate_diff_from_whole_trajectory(heading, ts, i) for i in range(heading.shape[0])] )
+    
+    if smooth_rate:
+        rate = savgol_filter(rate, 20, 3)
 
+    return rate
+
+def get_continuous_heading(heading, dt, max_hr):
+    for i in range(heading.shape[0]):
+        h = heading[i]
+        if i < heading.shape[0] -1:
+            if abs(h - heading[i+1]) > max_hr * dt:
+                assert np.min((h%np.pi, -h % np.pi)) < max_hr * dt, "max_hr is set too small"
+                heading[i+1:] += np.pi * 2 * np.sign(h - heading[i+1])
+    return heading
+
+    
 
 
 ########### debug #####################

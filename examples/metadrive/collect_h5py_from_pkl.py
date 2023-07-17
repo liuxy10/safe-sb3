@@ -4,7 +4,7 @@ import numpy as np
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
-from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed
+from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed, get_rate_from_heading
 
 import tqdm
 import h5py
@@ -46,7 +46,7 @@ def get_current_ego_trajectory_old(waymo_env,i):
     # local_vel = get_local_from_heading(velocity, heading) # not used
     # local_acc = get_acc_from_vel(local_vel, ts)
     acc = get_acc_from_speed(speed, ts)
-    heading_speed = get_acc_from_speed(heading, ts)
+    heading_speed = get_rate_from_heading(heading, ts)
 
     print("max speed, avg speed, acc range,  heading range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
            np.max(speed), 3, np.mean(speed), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3))

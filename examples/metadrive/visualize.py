@@ -68,7 +68,7 @@ def visualize_h5py(args):
                 data_name = dataset_names[i]
                 data = np.array(hf[data_name])
                 # if data_name == 'heading_rates':
-                #     # print(data)
+                    # print(data, np.mean(data), np.max(data), np.min(data))
                 ax.hist(data, bins='auto')
                 ax.set_title(data_name)
                 ax.set_xlabel('Value')
@@ -114,8 +114,8 @@ def visualize_bc_prediction(args):
     env.seed(args["env_seed"])
     
     
-    # model = BC.load(args['model_path'])
-    model = SAC.load(args['model_path'])
+    model = BC.load(args['model_path'])
+    # model = SAC.load(args['model_path'])
     for seed in range(0, num_scenarios):
             o = env.reset(force_seed=seed)
             #ts, position, velocity, acc, heading
@@ -190,9 +190,9 @@ def visualize_bc_prediction(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/bc_9_900.h5py')
+    parser.add_argument('--h5py_path', type=str, default='/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/h5py/pkl9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/sac-waymo-es0_770000_steps-heading.zip')
+    parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/bc-waymo-es0.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
