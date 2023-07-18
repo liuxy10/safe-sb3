@@ -37,8 +37,7 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        # "agent_policy":EnvInputHeadingAccPolicy,
-        "agent_policy":PMKinematicsEgoPolicy,
+        "agent_policy":ReplayEgoCarPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
@@ -180,7 +179,7 @@ def test(args):
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/pkl9_900.h5py')
+    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)

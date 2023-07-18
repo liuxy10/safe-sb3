@@ -67,9 +67,7 @@ def visualize_h5py(args):
             for i, ax in enumerate(axes.flatten()):
                 data_name = dataset_names[i]
                 data = np.array(hf[data_name])
-                # if data_name == 'heading_rates':
-                    # print(data, np.mean(data), np.max(data), np.min(data))
-                ax.hist(data, bins='auto')
+                ax.hist(data, bins=50, density = True, log=True)
                 ax.set_title(data_name)
                 ax.set_xlabel('Value')
                 ax.set_ylabel('Frequency')
@@ -190,7 +188,7 @@ def visualize_bc_prediction(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--h5py_path', type=str, default='/home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/h5py/pkl9_900.h5py')
+    parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/bc-waymo-es0.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)

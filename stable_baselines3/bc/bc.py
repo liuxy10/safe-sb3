@@ -132,7 +132,7 @@ class BC(OffPolicyAlgorithm):
         callback: MaybeCallback = None,
         log_interval: int = 1,
         tb_log_name: str = "BC",
-        reset_num_timesteps: bool = True,
+        reset_num_timesteps: bool = False,
         progress_bar: bool = False,
     ) -> SelfBC:
         self.load_replay_buffer(data_dir, use_diff_action_space)

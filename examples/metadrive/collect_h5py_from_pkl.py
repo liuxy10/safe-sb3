@@ -99,7 +99,7 @@ def main(args):
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        
+        "use_render": True,
         "reactive_traffic": False,
                 # "vehicle_config": dict(
                 #     show_lidar=True,
