@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
-from metadrive.policy.replay_policy import ReplayEgoCarPolicy
+from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy, EnvInputPolicy
 from stable_baselines3 import BC
 from stable_baselines3 import SAC
@@ -37,11 +37,12 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":EnvInputHeadingAccPolicy,
+        # "agent_policy":EnvInputHeadingAccPolicy,
+        "agent_policy": PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        
+        "use_render": True,
         "reactive_traffic": False,
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
@@ -58,7 +59,7 @@ def main(args):
     exp_name = "sac-waymo-es" + str(args["env_seed"])
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
-
+    
     model = SAC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1, buffer_size = 100000)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # Save a checkpoint every given steps
@@ -94,7 +95,7 @@ def test(args):
         "manual_control": False,
         "no_traffic": False,
         # "agent_policy":EnvInputHeadingAccPolicy,
-        "agent_policy":EnvInputPolicy,
+        "agent_policy":PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
@@ -179,6 +180,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
+    
+    parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")

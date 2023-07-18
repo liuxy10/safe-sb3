@@ -37,7 +37,7 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":ReplayEgoCarPolicy,
+        "agent_policy":ReplayEgoCarPolicy
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
