@@ -111,7 +111,8 @@ def test(args):
     model.set_parameters(model_dir)
 
     for seed in range(0, num_scenarios):
-        plot_waymo_vs_pred(env, model, seed,'sac')
+        plot_waymo_vs_pred(env, model, seed,'sac', savefig_dir = "examples/metadrive/figs/sac_vs_waymo/diff_action")
+      
     
     del model
     env.close()
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--num_of_scenarios', type=str, default="100")
+    parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
     parser.add_argument('--save_freq', type=int, default=int(10000))
     args = parser.parse_args()

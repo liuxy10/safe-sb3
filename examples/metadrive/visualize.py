@@ -73,7 +73,7 @@ def visualize_h5py(args):
                 ax.set_ylabel('Frequency')
             plt.show()
 
-def plot_waymo_vs_pred(env, model,seed, md_name):
+def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
     
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
     o = env.reset(force_seed=seed)
@@ -129,7 +129,10 @@ def plot_waymo_vs_pred(env, model,seed, md_name):
         axs[0,1].set_ylabel('speed')
         axs[1,1].set_ylabel('reward')
         # plt.title("recorded action vs test predicted action")
-        plt.show()
+        if len(savefig_dir) > 0:
+            plt.savefig(os.path.join(savefig_dir, "seed_"+str(seed)+".jpg"))
+        else:
+            plt.show()
 
 def visualize_bc_prediction(args):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
