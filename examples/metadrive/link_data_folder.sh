@@ -9,3 +9,5 @@ cp  /home/vision/src/data/metadrive/saved_bc_policy/bc-waymo-es0_120000_steps.zi
 
 # shh copy checkpoint from server to pc
 scp vision@128.32.164.115:/home/vision/src/data/metadrive/saved_sac_policy/heading_acc/sac-waymo-es0_770000_steps.zip /home/xinyi/Documents/UCB/safe-sb3/examples/metadrive/saved_bc_policy/
+
+# ssh copy model.pt from server to pc

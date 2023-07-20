@@ -11,6 +11,7 @@ from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy, EnvInput
 from stable_baselines3 import BC
 from stable_baselines3 import SAC
 from stable_baselines3.common.evaluation import evaluate_policy
+from visualize import plot_waymo_vs_pred
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
 
@@ -74,14 +75,8 @@ def main(args):
     del model
     env.close()
 
-    # done = False
-    # while not done:
-    #     env.render()
-    #     action = env.action_space.sample()  # Replace with your agent's action selection logic
-    #     obs, reward, done, info = env.step(action)
 
 def test(args):
-    from collect_h5py_from_pkl import get_current_ego_trajectory_old
 
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
@@ -94,80 +89,30 @@ def test(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        # "agent_policy":EnvInputHeadingAccPolicy,
         "agent_policy":PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": True,
+        "use_render": False,
         "reactive_traffic": True,
-                # "vehicle_config": dict(
-                #     show_lidar=True,
-                #     # no_wheel_friction=True,
-                #     lidar=dict(num_lasers=0))
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            ),
+        "vehicle_config": dict(
+        lidar=dict(num_lasers=120, distance=50, num_others=4),
+        lane_line_detector=dict(num_lasers=12, distance=50),
+        side_detector=dict(num_lasers=160, distance=50)
+        ),
     },
     )
 
-
     env.seed(args["env_seed"])
     
-    exp_name = "sac-waymo-es" + str(args["env_seed"])
-    
-    model = SAC.load(os.path.join(args['output_dir'], exp_name))
+    model_dir = args["policy_load_dir"]
+
+    model = SAC("MlpPolicy", env)
+    model.set_parameters(model_dir)
+
     for seed in range(0, num_scenarios):
-            o = env.reset(force_seed=seed)
-            ts, pos_rec, _, _,_,_ = get_current_ego_trajectory_old(env,seed)
-            
-            
-            pos_test = []
-            acc_test_local = []
-            cum_rew, cum_cost = 0,0
-            for i in range(len(ts)):
-                action, _ = model.predict(o, deterministic = True)
-                pos_cur = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
-                vel_cur = np.array(env.engine.agent_manager.active_agents['default_agent'].velocity)
-                pos_test.append(pos_cur)
-                # action[1] = - action[-1]
-                o, r, d, info = env.step(action)
-                cum_rew += r
-                cum_cost += info['cost']
-                env.render("topdown")
-                # env.render(mode="rgb_array")
-                print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
-                if d:
-                    print('seed '+str(seed)+' is over!')
-                    break
-            
-            plot_comparison = True
-            if plot_comparison:
-                pos_test = np.array(pos_test)
-                fig = plt.figure()
-                ax1 = fig.add_subplot(211)
-                ax2 = fig.add_subplot(212)
-                # Plot pos
-                ax1.plot(pos_test[:,0], pos_test[:,1], label = 'test')
-                ax1.plot(pos_rec[:,0], pos_rec[:,1], label = 'record')
-                # plt.plot(ts, vels[:,0], ts, vels[:,1], label = 'global')
-                ax1.legend()
-                ax1.axis('equal')
-                ax1.set_xlabel('metadrive coordinate x(m)')
-                ax1.set_ylabel('metadrive coordinate y(m)')
-                ax1.title("record vs test")
-                ax1.show()
-
-
-
-
-
-
-                
-            
+        plot_waymo_vs_pred(env, model, seed,'sac')
+    
     del model
     env.close()
 
@@ -180,7 +125,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
-    
+    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/sac-diff-peak.pt')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
@@ -190,5 +135,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    # main(args)
+    test(args)

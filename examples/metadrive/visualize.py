@@ -73,7 +73,63 @@ def visualize_h5py(args):
                 ax.set_ylabel('Frequency')
             plt.show()
 
+def plot_waymo_vs_pred(env, model,seed, md_name):
+    
+    from collect_h5py_from_pkl import get_current_ego_trajectory_old
+    o = env.reset(force_seed=seed)
+    
+    #recorded ts, position, velocity, acc, heading from waymo
+    ts, pos_rec, vel_rec, acc_rec, heading_rec, heading_rate_rec = get_current_ego_trajectory_old(env,seed)
+    speed_rec = np.linalg.norm(vel_rec, axis = 1)
+    print(np.array(env.engine.agent_manager.active_agents['default_agent'].speed), speed_rec[0])
 
+    
+    pos_pred = np.zeros_like(pos_rec)
+    action_pred = np.zeros_like(pos_rec) # default diff action version
+    actual_heading = np.zeros_like(ts)
+    actual_speed= np.zeros_like(ts)
+    actual_rew = np.zeros_like(ts)
+
+
+    cum_rew, cum_cost = 0,0
+    for i in range(len(ts)):
+        action, _ = model.predict(o, deterministic = True)
+        o, r, d, info = env.step(action)
+        actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
+        actual_speed[i] = np.array(env.engine.agent_manager.active_agents['default_agent'].speed/3.6)
+        pos_pred [i,:] = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
+        action_pred [i,:] = action
+        actual_rew[i] = r
+        cum_rew += r
+        
+        cum_cost += info['cost']
+        print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
+        
+
+    plot_comparison = True
+    action_pred = np.array(action_pred)
+    if plot_comparison:
+        pos_pred = np.array(pos_pred)
+        fig, axs = plt.subplots(2, 2)
+
+        axs[0,0].plot(ts, action_pred[:,1], label = md_name+' pred acc')
+        axs[0,0].plot(ts, acc_rec, label = 'waymo acc' )
+        axs[1,0].plot(ts, actual_heading, label = md_name+' actual heading' )
+        axs[1,0].plot(ts, heading_rec, label = 'waymo heading')
+        axs[0,1].plot(ts, actual_speed, label = md_name+' actual speed' )
+        axs[0,1].plot(ts, speed_rec, label = 'waymo speed')
+        axs[1,1].plot(ts, actual_rew, label = md_name+' actual reward' )
+        # axs[1,1].plot(ts, rew_rec, label = 'waymo reward')
+        for i in range(2):
+            for j in range(2):
+                axs[i,j].legend()
+                axs[i,j].set_xlabel('time')
+        axs[0,0].set_ylabel('acceleration')
+        axs[1,0].set_ylabel('heading')
+        axs[0,1].set_ylabel('speed')
+        axs[1,1].set_ylabel('reward')
+        # plt.title("recorded action vs test predicted action")
+        plt.show()
 
 def visualize_bc_prediction(args):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
@@ -142,23 +198,23 @@ def visualize_bc_prediction(args):
             if plot_comparison:
                 pos_pred = np.array(pos_pred)
                 fig = plt.figure()
-                ax1 = fig.add_subplot(211)
-                ax2 = fig.add_subplot(212)
+                axs[0,0] = fig.add_subplot(211)
+                axs[1,0] = fig.add_subplot(212)
                 # Plot pos
-                # ax1.plot(pos_pred[:,0], pos_pred[:,1], label = 'test')
-                # ax1.plot(pos_rec[:,0], pos_rec[:,1], label = 'record')
-                ax1.plot(ts, acc, label = 'waymo acc')
-                ax1.plot(ts, action_pred[:,1], label = 'bc pred acc')
-                ax2.plot(ts, heading, label = 'waymo heading')
-                ax2.plot(ts, action_pred[:,0], label = 'bc pred heading')
-                ax2.plot(ts, actual_heading, label = 'actual heading' )
-                ax1.legend()
-                ax2.legend()
-                # ax1.axis('equal')
-                ax1.set_xlabel('time')
-                ax1.set_ylabel('acceleration')
-                ax2.set_xlabel('time')
-                ax2.set_ylabel('heading')
+                # axs[0,0].plot(pos_pred[:,0], pos_pred[:,1], label = 'test')
+                # axs[0,0].plot(pos_rec[:,0], pos_rec[:,1], label = 'record')
+                axs[0,0].plot(ts, acc, label = 'waymo acc')
+                axs[0,0].plot(ts, action_pred[:,1], label = 'bc pred acc')
+                axs[1,0].plot(ts, heading, label = 'waymo heading')
+                axs[1,0].plot(ts, action_pred[:,0], label = 'bc pred heading')
+                axs[1,0].plot(ts, actual_heading, label = 'actual heading' )
+                axs[0,0].legend()
+                axs[1,0].legend()
+                # axs[0,0].axis('equal')
+                axs[0,0].set_xlabel('time')
+                axs[0,0].set_ylabel('acceleration')
+                axs[1,0].set_xlabel('time')
+                axs[1,0].set_ylabel('heading')
                 plt.title("recorded action vs test predicted action")
                 plt.show()
 
