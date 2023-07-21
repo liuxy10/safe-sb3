@@ -43,7 +43,7 @@ def main(args):
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": True,
+        "use_render": False,
         "reactive_traffic": False,
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
@@ -104,10 +104,6 @@ def test(args):
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": True,
-                # "vehicle_config": dict(
-                #     show_lidar=True,
-                #     # no_wheel_friction=True,
-                #     lidar=dict(num_lasers=0))
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
                 lidar=dict(num_lasers=120, distance=50, num_others=4),
@@ -118,16 +114,22 @@ def test(args):
     )
 
 
-    env.seed(args["env_seed"])
+    # env.seed(args["env_seed"])
     
-    env.seed(args["env_seed"])
+    # env.seed(args["env_seed"])
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)
-
+    avg_cost, avg_rew = 0,0
     for seed in range(0, num_scenarios):
-        plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
-      
+        rew, cost = plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+        avg_rew +=  rew
+        avg_cost +=  cost
+        print("seed,  rew, cost = ", seed, rew, cost)
+    avg_cost/= num_scenarios
+    avg_rew/=num_scenarios
+
+    print("avg. rew, cost out of "+str(num_scenarios)+" scenarios = ",avg_rew, avg_cost )
     del model
     env.close()
 

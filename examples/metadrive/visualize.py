@@ -1,4 +1,4 @@
-from jupyterlab_h5web import H5Web
+
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,6 +18,8 @@ import h5py
 
 WAYMO_SAMPLING_FREQ = 10
 
+
+
 def visualize_h5py(args):
     # Specify the filename of the h5py file
     h5py_filename = args['h5py_path']
@@ -29,6 +31,8 @@ def visualize_h5py(args):
     print("Names of h5py datasets:")
     for name in dataset_names:
         print(name)
+
+    
 
     plot_rew_cost_versus_time = False
     if plot_rew_cost_versus_time:
@@ -133,6 +137,7 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
             plt.savefig(os.path.join(savefig_dir, "seed_"+str(seed)+".jpg"))
         else:
             plt.show()
+    return cum_rew, cum_cost
 
 def visualize_bc_prediction(args):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
@@ -200,9 +205,7 @@ def visualize_bc_prediction(args):
             action_pred = np.array(action_pred)
             if plot_comparison:
                 pos_pred = np.array(pos_pred)
-                fig = plt.figure()
-                axs[0,0] = fig.add_subplot(211)
-                axs[1,0] = fig.add_subplot(212)
+                fig, axs = plt.subplot(2,1)
                 # Plot pos
                 # axs[0,0].plot(pos_pred[:,0], pos_pred[:,1], label = 'test')
                 # axs[0,0].plot(pos_rec[:,0], pos_rec[:,1], label = 'record')

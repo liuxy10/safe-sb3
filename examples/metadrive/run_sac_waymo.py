@@ -110,10 +110,16 @@ def test(args):
     model = SAC("MlpPolicy", env)
     model.set_parameters(model_dir)
 
+    avg_cost, avg_rew = 0,0
     for seed in range(0, num_scenarios):
-        plot_waymo_vs_pred(env, model, seed,'sac', savefig_dir = "examples/metadrive/figs/sac_vs_waymo/diff_action")
-      
-    
+        rew, cost = plot_waymo_vs_pred(env, model, seed, 'sac', savefig_dir = "examples/metadrive/figs/sac_vs_waymo/diff_action")
+        avg_rew +=  rew
+        avg_cost +=  cost
+        print("seed,  rew, cost = ", seed, rew, cost)
+    avg_cost/= num_scenarios
+    avg_rew/=num_scenarios
+
+    print("avg. rew, cost out of "+str(num_scenarios)+" scenarios = ",avg_rew, avg_cost )
     del model
     env.close()
 
