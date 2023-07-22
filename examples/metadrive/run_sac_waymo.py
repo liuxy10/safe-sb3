@@ -112,7 +112,7 @@ def test(args):
 
     avg_cost, avg_rew = 0,0
     for seed in range(0, num_scenarios):
-        rew, cost = plot_waymo_vs_pred(env, model, seed, 'sac', savefig_dir = "examples/metadrive/figs/sac_vs_waymo/diff_action/test_20/")
+        rew, cost = plot_waymo_vs_pred(env, model, seed, 'sac', savefig_dir = args["savefig_dir"])
         avg_rew +=  rew
         avg_cost +=  cost
         print("seed,  rew, cost = ", seed, rew, cost)
@@ -133,6 +133,7 @@ if __name__ == "__main__":
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_20')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
     parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/sac-diff-peak.pt')
+    parser.add_argument('--savefig_dir', type=str, default= "examples/metadrive/figs/sac_vs_waymo/diff_action/test_20/")
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
