@@ -3,6 +3,7 @@ from datetime import datetime
 
 import bullet_safety_gym
 import gym
+
 import safety_gym
 from wrappers import AddCostToRewardEnv
 
@@ -24,7 +25,6 @@ def main(args):
     # date = datetime.now().strftime("%Y%m%d%H%M%S")
     experiment_name = (
         "js-sac-" + env_name + "_es" + str(args["env_seed"])
-        # + "_lam" + str(lamb) + '_' + date)
         + "_lam" + str(lamb))
     if args["suffix"]:
         experiment_name += f'_{args["suffix"]}'
@@ -37,7 +37,7 @@ def main(args):
     model = JumpStartSAC(
         "MlpPolicy",
         expert_policy,
-        env,
+        env, env,
         tensorboard_log=tensorboard_log,
         verbose=1,
         device=device,
@@ -52,12 +52,13 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', '-e', type=str, default='Safexp-CarButton1-v0')
+    parser.add_argument('--env', '-e', type=str, default='Safexp-CarGoal1-v0')
     parser.add_argument('--env_seed', '-es', type=int, default=3)
     parser.add_argument('--device', '-d', type=str, default="cpu")
 
     # E.g., expert_model_dir: 'sac-Safexp-CarButton1-v0_es3_lam0.1/SAC_6'
-    parser.add_argument('--expert_model_dir', '-emd', type=str, required=True)
+    # parser.add_argument('--expert_model_dir', '-emd', type=str, required=True)
+    parser.add_argument('--expert_model_dir', '-emd', type=str, default='bc-Safexp-CarGoal1-v0-es0/BC_1')
 
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--steps', '-st', type=int, default=int(1e7))
