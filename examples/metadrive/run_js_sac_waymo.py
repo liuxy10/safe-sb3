@@ -78,20 +78,11 @@ def main(args):
     del model
     env.close()
 
-    # done = False
-    # while not done:
-    #     env.render()
-    #     action = env.action_space.sample()  # Replace with your agent's action selection logic
-    #     obs, reward, done, info = env.step(action)
-
-
-    env.close()
-
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_20')
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)

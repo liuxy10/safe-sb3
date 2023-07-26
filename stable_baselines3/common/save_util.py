@@ -87,6 +87,7 @@ def data_to_json(data: Dict[str, Any]) -> str:
     serializable_data = {}
     for data_key, data_item in data.items():
         # See if object is JSON serializable
+        
         if is_json_serializable(data_item):
             # All good, store as it is
             serializable_data[data_key] = data_item
@@ -96,33 +97,37 @@ def data_to_json(data: Dict[str, Any]) -> str:
             # Also store type of the class for consumption
             # from other languages/humans, so we have an
             # idea what was being stored.
-            base64_encoded = base64.b64encode(cloudpickle.dumps(data_item)).decode()
+            try:
+                base64_encoded = base64.b64encode(cloudpickle.dumps(data_item)).decode() # pickle cannot handle c/c++ objects: https://discourse.panda3d.org/t/pickling-problem/2495
 
-            # Use ":" to make sure we do
-            # not override these keys
-            # when we include variables of the object later
-            cloudpickle_serialization = {
-                ":type:": str(type(data_item)),
-                ":serialized:": base64_encoded,
-            }
+                # Use ":" to make sure we do
+                # not override these keys
+                # when we include variables of the object later
+                cloudpickle_serialization = {
+                    ":type:": str(type(data_item)),
+                    ":serialized:": base64_encoded,
+                }
 
-            # Add first-level JSON-serializable items of the
-            # object for further details (but not deeper than this to
-            # avoid deep nesting).
-            # First we check that object has attributes (not all do,
-            # e.g. numpy scalars)
-            if hasattr(data_item, "__dict__") or isinstance(data_item, dict):
-                # Take elements from __dict__ for custom classes
-                item_generator = data_item.items if isinstance(data_item, dict) else data_item.__dict__.items
-                for variable_name, variable_item in item_generator():
-                    # Check if serializable. If not, just include the
-                    # string-representation of the object.
-                    if is_json_serializable(variable_item):
-                        cloudpickle_serialization[variable_name] = variable_item
-                    else:
-                        cloudpickle_serialization[variable_name] = str(variable_item)
+                # Add first-level JSON-serializable items of the
+                # object for further details (but not deeper than this to
+                # avoid deep nesting).
+                # First we check that object has attributes (not all do,
+                # e.g. numpy scalars)
+                if hasattr(data_item, "__dict__") or isinstance(data_item, dict):
+                    # Take elements from __dict__ for custom classes
+                    item_generator = data_item.items if isinstance(data_item, dict) else data_item.__dict__.items
+                    for variable_name, variable_item in item_generator():
+                        # Check if serializable. If not, just include the
+                        # string-representation of the object.
+                        if is_json_serializable(variable_item):
+                            cloudpickle_serialization[variable_name] = variable_item
+                        else:
+                            cloudpickle_serialization[variable_name] = str(variable_item)
 
-            serializable_data[data_key] = cloudpickle_serialization
+                serializable_data[data_key] = cloudpickle_serialization
+            
+            except TypeError:
+                print("[saving log] did not include "+str(type(data_item))+": pickle cannot handle c/c++ objects" )
     json_string = json.dumps(serializable_data, indent=4)
     return json_string
 
