@@ -24,7 +24,7 @@ def infer_algo_cls_from_dir_name(dir):
 def load_expert_policy(model_dir, env, device="cpu"):
     algo_cls = infer_algo_cls_from_dir_name(model_dir)
     model = algo_cls("MlpPolicy", env, device=device)
-    model_dir = os.path.join("tensorboard_logs", model_dir, "model.pt")
+    # model_dir = os.path.join("tensorboard_logs", model_dir, "model.pt")
     model.set_parameters(model_dir)
     expert_policy = model.policy
     return expert_policy
