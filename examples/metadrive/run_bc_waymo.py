@@ -113,10 +113,8 @@ def test(args):
     },
     )
 
-
-    # env.seed(args["env_seed"])
-    
     env.seed(args["env_seed"])
+    
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)

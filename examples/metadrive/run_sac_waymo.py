@@ -43,7 +43,7 @@ def main(args):
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": True,
+        "use_render": False,
         "reactive_traffic": False,
                 "vehicle_config": dict(
                 # no_wheel_friction=True,
@@ -67,7 +67,10 @@ def main(args):
     checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
                                          name_prefix=exp_name)
     
-    model.learn(args['steps'], callback=checkpoint_callback)
+    model.learn(args['steps'], 
+                callback=checkpoint_callback, 
+                use_diff_action_space = args['use_diff_action_space']
+                )
         
     # loaded_agent =PPO.load(exp_name)
 

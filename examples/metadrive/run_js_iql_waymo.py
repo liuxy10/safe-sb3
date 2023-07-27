@@ -68,7 +68,7 @@ def main(args):
     model =  JumpStartIQL(
         "MlpPolicy",
         expert_policy,
-        env, env,
+        env, 
         tensorboard_log=tensorboard_log,
         verbose=1,
         device=device,
