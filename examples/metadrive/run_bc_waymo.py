@@ -62,13 +62,13 @@ def main(args):
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # Save a checkpoint every given steps
-    checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-                                         name_prefix=exp_name)
+    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
+    #                                      name_prefix=exp_name)
     
     model.learn(
                 args['steps'], 
                 data_dir = args['h5py_path'], 
-                callback=checkpoint_callback, 
+                # callback=checkpoint_callback, 
                 use_diff_action_space = args['use_diff_action_space']
                 )
         
@@ -116,20 +116,14 @@ def test(args):
 
     # env.seed(args["env_seed"])
     
-    # env.seed(args["env_seed"])
+    env.seed(args["env_seed"])
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)
-    avg_cost, avg_rew = 0,0
-    for seed in range(0, num_scenarios):
-        rew, cost = plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = args['savefig_dir'])
-        avg_rew +=  rew
-        avg_cost +=  cost
-        print("seed,  rew, cost = ", seed, rew, cost)
-    avg_cost/= num_scenarios
-    avg_rew/=num_scenarios
 
-    print("avg. rew, cost out of "+str(num_scenarios)+" scenarios = ",avg_rew, avg_cost )
+    for seed in range(0, num_scenarios):
+        plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+      
     del model
     env.close()
 
@@ -145,7 +139,6 @@ if __name__ == "__main__":
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/bc-diff-peak.pt')
-    parser.add_argument('--savefig_dir', type=str, default= "examples/metadrive/figs/bc_vs_waymo/diff_action/test_9/")
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
@@ -155,8 +148,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
 
 
 

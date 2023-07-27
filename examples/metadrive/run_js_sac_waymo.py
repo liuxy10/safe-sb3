@@ -89,11 +89,11 @@ if __name__ == "__main__":
     parser.add_argument('--device', '-d', type=str, default="cpu")
     parser.add_argument('--expert_model_dir', '-emd', type=str, default='tensorboard_log/bc-waymo-es0/BC_57/model.pt')
 
-    parser.add_argument('--lambda', '-lam', type=float, default=1.)
+    parser.add_argument('--lambda', '-lam', type=float, default=0.1)
     parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(1e7))
     parser.add_argument('--random', '-r', action='store_true', default=False)
-    parser.add_argument('--suffix', type=str, default='')
+    parser.add_argument('--suffix', type=str)
     args = parser.parse_args()
     args = vars(args)
 
