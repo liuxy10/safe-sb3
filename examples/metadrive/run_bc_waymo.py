@@ -39,7 +39,7 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        "agent_policy":PMKinematicsEgoPolicy,
+        "agent_policy":ReplayEgoCarPolicy, # BC uses ReplayEgoCarPolicy to train policy
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
@@ -60,8 +60,7 @@ def main(args):
     tensorboard_log = os.path.join(root_dir, exp_name)
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-    # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-    # Save a checkpoint every given steps
+   # Save a checkpoint every given steps
     # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
     #                                      name_prefix=exp_name)
     
@@ -71,18 +70,10 @@ def main(args):
                 # callback=checkpoint_callback, 
                 use_diff_action_space = args['use_diff_action_space']
                 )
-        
-    # loaded_agent =PPO.load(exp_name)
 
     
     del model
     env.close()
-
-    # done = False
-    # while not done:
-    #     env.render()
-    #     action = env.action_space.sample()  # Replace with your agent's action selection logic
-    #     obs, reward, done, info = env.step(action)
 
 def test(args):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old

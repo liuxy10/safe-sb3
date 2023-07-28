@@ -19,6 +19,6 @@ python examples/metadrive/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ 
 
 # train SAC with BC JumpStart (compared with sac-waymo-es0/SAC_7 and bc-waymo-es0/BC_0)
 python examples/metadrive/run_js_sac_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --output_dir ~/src/data/metadrive/saved_sac_policy/ --num_of_scenarios 900 --steps 1000000 --device cuda --expert_model_dir tensorboard_log/bc-waymo-es0/BC_0/model.pt --use_diff_action=True
-
+# train iql with BC JumpStart
 python examples/metadrive/run_js_iql_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --output_dir ~/src/data/metadrive/saved_sac_policy/ --num_of_scenarios 900 --steps 1000000 --device cuda --expert_model_dir tensorboard_log/bc-waymo-es0/BC_0/model.pt --use_diff_action=True
 

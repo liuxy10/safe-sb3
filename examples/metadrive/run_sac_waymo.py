@@ -68,8 +68,8 @@ def main(args):
                                          name_prefix=exp_name)
     
     model.learn(args['steps'], 
-                callback=checkpoint_callback, 
-                use_diff_action_space = args['use_diff_action_space']
+                callback=checkpoint_callback#, 
+                # use_diff_action_space = args['use_diff_action_space']
                 )
         
     # loaded_agent =PPO.load(exp_name)
@@ -105,6 +105,7 @@ def test(args):
         ),
     },
     )
+
 
     env.seed(args["env_seed"])
     
@@ -146,5 +147,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
