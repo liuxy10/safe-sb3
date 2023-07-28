@@ -21,6 +21,17 @@ from visualize_map import plot_reachable_region
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
+def save_data_to_pickle(filename, data):
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            existing_data = pickle.load(f)
+        existing_data.append(data)
+    else:
+        existing_data = [data]
+
+    with open(filename, 'wb') as f:
+        pickle.dump(existing_data, f)
+
 
 def main(args):
     file_list = os.listdir(args['pkl_dir'])
@@ -84,20 +95,21 @@ def main(args):
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
             
-            data.append(
-                {
+            data = {
                     "observations":obs_rec[:N-1],
                     "next_observations":obs_rec[1:N], 
                     "actions": ac_rec[:N-1], 
                     "rewards": re_rec[:N-1], 
                     "dones":terminal_rec[:N-1]
                 }
-            )
+                
+            save_data_to_pickle(args['dt_data_path'], data)
         # except:
         #     print("skipping traj "+str(seed))
         #     continue
-    with open(args['dt_data_path'], 'wb') as pickle_file:
-        pickle.dump(data, pickle_file)
+            
+    # with open(args['dt_data_path'], 'wb') as pickle_file:
+    #     pickle.dump(data, pickle_file)
     
 
     env.close()
