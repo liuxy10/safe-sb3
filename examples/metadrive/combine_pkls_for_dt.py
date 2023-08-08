@@ -120,9 +120,11 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9')
+    parser.add_argument('--pkl_dir', type=str, default='/home/vision/src/data/metadrive/pkl_9/')
+    
+
     parser.add_argument('--dt_data_path', type=str, default='examples/metadrive/dt_pkl/test.pkl')
-    parser.add_argument('--num_of_scenarios', type=str, default='10')
+    parser.add_argument('--num_of_scenarios', type=str, default='900')
     # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)

@@ -48,8 +48,8 @@ def get_current_ego_trajectory_old(waymo_env,i):
     acc = get_acc_from_speed(speed, ts)
     heading_speed = get_rate_from_heading(heading, ts)
 
-    print("max speed, avg speed, acc range,  heading range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
-           np.max(speed), 3, np.mean(speed), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3))
+    # print("max speed, avg speed, acc range,  heading range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
+    #        np.max(speed), 3, np.mean(speed), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3))
     
 
     plot_global_vs_local_vel = False
@@ -126,7 +126,7 @@ def main(args):
     headings, heading_rates, speeds, accelerations = np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1)),np.ndarray((0, 1))
 
     for seed in range(num_scenarios):
-        # try: 
+        try: 
             env.reset(force_seed=seed)
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
@@ -141,7 +141,9 @@ def main(args):
                 re_rec = np.concatenate((re_rec, np.array([reward])))
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
-
+            
+            print("max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
+           np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
             # add recorded candidates
             headings = np.concatenate((headings, heading.reshape(-1,1)))
             heading_rates = np.concatenate((heading_rates, heading_rate.reshape(-1,1)))
@@ -222,9 +224,9 @@ def main(args):
                     print("[buffer] done round: "+ str(seed))
 
 
-        # except:
-        #     print("skipping traj "+str(seed))
-        #     continue
+        except:
+            print("skipping traj "+str(seed))
+            continue
         
             
 
