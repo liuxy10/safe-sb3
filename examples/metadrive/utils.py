@@ -9,7 +9,7 @@ from metadrive.component.vehicle_model.bicycle_model import BicycleModel
 
 
 class AddCostToRewardEnv(WaymoEnv):
-    def __init__(self, wrapped_env, lamb=30.):
+    def __init__(self, wrapped_env, lamb=10.):
         """Initialize the class.
         
         Args: 
@@ -60,7 +60,7 @@ class BicycleModelEgoEnv_base(MetaDriveEnv):
         return o, r, d, i
 
 
-############## query map shit #########################
+############## query map stuff #########################
 
 
 def get_unique_vals(dat):
@@ -104,7 +104,7 @@ def estimate_action(dat, query_speed, query_lat_acc, query_lon_acc, use_2nd_pt =
 
 
     
-
+################# some packaging utils ####################
 
 
 

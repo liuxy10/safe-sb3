@@ -24,7 +24,7 @@ TOTAL_TIMESTAMP = 90
 
 
 def get_current_ego_trajectory_old(waymo_env,i):
-    data = waymo_env.engine.data_manager.get_case(i)
+    data = waymo_env.engine.data_manager.get_case(i) # 
     
     sdc_id = data['sdc_index']
     state_all_traj = data['tracks'][sdc_id]['state'] # 199*10
@@ -142,7 +142,7 @@ def main(args):
                 terminal_rec = np.concatenate((terminal_rec, np.array([done])))
                 cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
             
-            print("max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
+            print("i, max speed, avg speed, acc range,  heading range, reward range, cost range = " +str(seed)+",{:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(
            np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
             # add recorded candidates
             headings = np.concatenate((headings, heading.reshape(-1,1)))
@@ -151,7 +151,7 @@ def main(args):
             accelerations = np.concatenate((accelerations, acc.reshape(-1,1)))
 
         
-            num_scenarios_per_buffer = 10
+            num_scenarios_per_buffer = 100
             num_dps_per_scenarios = acc.shape[0]
             num_dps_per_buffer = num_scenarios_per_buffer * num_dps_per_scenarios
             max_num_dps = num_scenarios * num_dps_per_scenarios
@@ -221,7 +221,6 @@ def main(args):
 
     
 
-                    print("[buffer] done round: "+ str(seed))
 
 
         except:
