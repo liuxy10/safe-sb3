@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
 def main(args):
     device = args["device"]
+    lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
     
 
@@ -60,13 +61,25 @@ def main(args):
         + "_lamb" + str(lamb))
     if args["suffix"]:
         experiment_name += f'_{args["suffix"]}'
+    if use_transformer_expert:
+        experiment_name += '_transformer'
     tensorboard_log = os.path.join(root_dir, experiment_name)
 
-    expert_policy = js_utils.load_expert_policy(
-        model_dir=args['expert_model_dir'], env=env, device=device
-    )
+    if use_transformer_expert:
+        loaded_stats = js_utils.load_demo_stats(
+            path=args["expert_model_dir"]
+        )
+        obs_mean, obs_std, reward_scale, target_return = loaded_stats
+        expert_policy = js_utils.load_transformer(
+            model_dir=args['expert_model_dir'], device=device
+        )
+    else:
+        obs_mean, obs_std = None, None
+        expert_policy = js_utils.load_expert_policy(
+            model_dir=args['expert_model_dir'], env=env, device=device
+        )
 
-    model =  JumpStartIQL(
+    model = JumpStartIQL(
         "MlpPolicy",
         expert_policy,
         env,
@@ -88,13 +101,14 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
-    parser.add_argument('--device', '-d', type=str, default="cpu")
-    parser.add_argument('--expert_model_dir', '-emd', type=str, default='tensorboard_log/bc-waymo-es0/BC_57/model.pt')
-    
+    parser.add_argument('--device', '-d', type=str, default="cuda")
+    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230810_211046-1x1m6yyf/model.pt')
+    parser.add_argument(
+        '--use_transformer_expert', action='store_true', default=False
+    )
     parser.add_argument('--lambda', '-lam', type=float, default=10)
     parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(1e7))

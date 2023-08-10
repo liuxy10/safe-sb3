@@ -1,5 +1,5 @@
-
 #!/bin/bash
+
 num_of_scenarios=10000
 total_eps=10
 n_per_eps=1000
