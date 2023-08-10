@@ -16,9 +16,6 @@ import sys
 sys.path.append("examples/metadrive")
 from utils import AddCostToRewardEnv
 from utils import estimate_action
-sys.path.append("examples/metadrive/map_action_to_acc")
-from visualize_map import plot_reachable_region
-
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
@@ -74,7 +71,8 @@ def collect_rollout_in_one_seed(env, seed):
     ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
     N = acc.shape[0]
     speed = np.linalg.norm(vel, axis = 1)
-    for t in tqdm.trange(N, desc="Timestep"):
+    # for t in tqdm.trange(N, desc="Timestep"):
+    for t in range(N):
         action = np.array([heading_rate[t], acc[t]]) 
 
         # whatever the input action is overwrited to be zero (due to the replay policy)
@@ -85,8 +83,8 @@ def collect_rollout_in_one_seed(env, seed):
         terminal_rec = np.concatenate((terminal_rec, np.array([done])))
         cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
     
-    print("seed, max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(seed, 1,
-    np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
+    # print("seed, max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(seed, 1,
+    # np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
     data = {
             "observations":obs_rec[:N-1],
             "next_observations":obs_rec[1:N], 
@@ -110,8 +108,8 @@ def main(args):
     print("num of scenarios: ", num_scenarios) 
 
     # check starting scenarios:
-    start_seed = check_start_seed(args['dt_data_path'])
-    # start_seed = args['start_seed']
+    start_seed = args['start_seed']
+    print("----------------start_seed = "+str(start_seed)+"!------------")
     env = AddCostToRewardEnv(
     {
         "manual_control": False,
@@ -119,6 +117,8 @@ def main(args):
         "agent_policy":ReplayEgoCarPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": 10000,
+        "start_seed":args["start_seed"],
+        "evironment_num": args["num_of_scenarios"],
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": False,
@@ -139,17 +139,14 @@ def main(args):
     
     data = []
 
-    for seed in range(start_seed, start_seed + num_scenarios):
+    # for seed in range(start_seed, start_seed + num_scenarios):
+    for seed in tqdm.trange(num_scenarios, desc="seeds"):
+        seed += start_seed
         # import pdb; pdb.set_trace()
-        try: 
+        # print(seed)
 
-            data = collect_rollout_in_one_seed(env, seed)
-            save_data_to_pickle(args['dt_data_path'], data)
-        except:
-            print("skipping traj "+str(seed))
-            continue
-            
-
+        data = collect_rollout_in_one_seed(env, seed)
+        save_data_to_pickle(args['dt_data_path'], data)
     
 
     env.close()

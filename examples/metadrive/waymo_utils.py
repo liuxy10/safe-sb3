@@ -6,10 +6,9 @@ from matplotlib.pyplot import figure
 
 from metadrive.engine.asset_loader import AssetLoader
 
-try:
-    import tensorflow as tf
-except ImportError:
-    pass
+
+import tensorflow as tf
+
 try:
     from metadrive.utils.waymo_utils.protos import scenario_pb2
 except ImportError:

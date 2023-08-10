@@ -1,3 +1,6 @@
+# install google cloud cli
+# curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-442.0.0-linux-x86_64.tar.gz
+
 # conda activate metadrive-gym
 cd ~/src/data/metadrive/tfrecord_9
 
