@@ -83,8 +83,8 @@ def collect_rollout_in_one_seed(env, seed):
         terminal_rec = np.concatenate((terminal_rec, np.array([done])))
         cost_rec = np.concatenate((cost_rec, np.array([info['cost']])))
     
-    # print("seed, max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(seed, 1,
-    # np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
+    print("seed, max speed, avg speed, acc range,  heading range, reward range, cost range = {:.{}f}, {:.{}f}, {:.{}f}, [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}], [{:.{}f}, {:.{}f}]".format(seed, 1,
+    np.max(vel), 3, np.mean(vel), 3, np.min(acc), 3, np.max(acc), 3, np.min(heading), 3, np.max(heading), 3, np.min(re_rec), 3, np.max(re_rec), 3, np.min(cost_rec), 3, np.max(cost_rec), 3))
     data = {
             "observations":obs_rec[:N-1],
             "next_observations":obs_rec[1:N], 
@@ -131,8 +131,8 @@ def main(args):
                 lidar=dict(num_lasers=120, distance=50, num_others=4),
                 lane_line_detector=dict(num_lasers=12, distance=50),
                 side_detector=dict(num_lasers=160, distance=50)
-            ),
-    }
+            )
+    }, lamb=args["lamb"]
     )
 
     # init all recorded variables
@@ -161,6 +161,7 @@ if __name__ == "__main__":
     parser.add_argument('--start_seed', type=int, required=True)
     parser.add_argument('--dt_data_path', type=str, default='examples/metadrive/dt_pkl/test.pkl')
     parser.add_argument('--num_of_scenarios', type=str, default='2000')
+    parser.add_argument('--lamb', type=float, default=10.)
     # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)

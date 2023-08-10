@@ -17,11 +17,12 @@ from stable_baselines3.js_sac import utils as js_utils
 
 
 from utils import AddCostToRewardEnv
-from visualize import plot_waymo_vs_pred
 import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
 def main(args):
     device = args["device"]
+    use_transformer_expert = args["use_transformer_expert"]
+    
 
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
@@ -52,7 +53,7 @@ def main(args):
     if args["random"]:
         env.set_num_different_layouts(100)
 
-
+    # specify tensorboard log settings
     root_dir = "tensorboard_logs"
     experiment_name = (
         "js-iql-waymo_es" + str(args["env_seed"])
@@ -68,7 +69,12 @@ def main(args):
     model =  JumpStartIQL(
         "MlpPolicy",
         expert_policy,
-        env, 
+        env,
+        use_transformer_expert=use_transformer_expert,
+        target_return=target_return,
+        reward_scale=reward_scale,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
         tensorboard_log=tensorboard_log,
         verbose=1,
         device=device,
@@ -88,8 +94,8 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cpu")
     parser.add_argument('--expert_model_dir', '-emd', type=str, default='tensorboard_log/bc-waymo-es0/BC_57/model.pt')
-
-    parser.add_argument('--lambda', '-lam', type=float, default=0.1)
+    
+    parser.add_argument('--lambda', '-lam', type=float, default=10)
     parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(1e7))
     parser.add_argument('--random', '-r', action='store_true', default=False)
