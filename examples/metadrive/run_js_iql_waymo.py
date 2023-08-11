@@ -73,6 +73,13 @@ def main(args):
         expert_policy = js_utils.load_transformer(
             model_dir=args['expert_model_dir'], device=device
         )
+
+        ## TODO: delete this when updated model is loaded :
+        if reward_scale == None:
+            reward_scale, target_return = 100, 500
+
+    
+
     else:
         obs_mean, obs_std = None, None
         expert_policy = js_utils.load_expert_policy(
@@ -105,9 +112,9 @@ if __name__ == "__main__":
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cuda")
-    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230810_211046-1x1m6yyf/model.pt')
+    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230811_045829-300g6mvp')
     parser.add_argument(
-        '--use_transformer_expert', action='store_true', default=False
+        '--use_transformer_expert', action='store_true', default=True
     )
     parser.add_argument('--lambda', '-lam', type=float, default=10)
     parser.add_argument('--num_of_scenarios', type=str, default="10")

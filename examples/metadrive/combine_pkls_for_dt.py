@@ -8,6 +8,7 @@ from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed, 
 
 import tqdm
 import pickle
+import h5py
 import os
 import matplotlib.pyplot as plt
 import re
@@ -37,6 +38,47 @@ def save_data_to_pickle(filename, data):
 
     with open(filename, 'wb') as f:
         pickle.dump(existing_data, f)
+
+
+
+def pkls_to_h5py_for_bc(pkl_dir, h5py_path):
+
+    pkl_list = os.listdir(pkl_dir)
+    
+    trajectories = []
+    for pkl_fn in pkl_list:
+        with open(os.path.join(pkl_dir, pkl_fn), 'rb') as f:
+            try:
+                temp = pickle.load(f)
+                trajectories.extend(temp)
+            except EOFError:
+                print("........ skipping "+ pkl_fn +" ........")
+                
+    trajectories = sorted(trajectories, key=lambda x: x['seed'])
+    
+    traj_flatten = {}
+    f = h5py.File(h5py_path, 'w') 
+
+    for name in trajectories[0].keys():
+        data = np.array([path[name] for path in trajectories])
+        if name in ["rewards", "dones"]:
+            data = data.reshape(-1,1)
+            traj_flatten[name] = data.reshape(-1,1)
+        traj_flatten[name] = np.vstack(data)
+        print("flatten traj for ",name, traj_flatten[name].shape)
+    
+    for name in traj_flatten.keys():
+        data = traj_flatten[name] 
+        if len(data.shape) == 2:
+            print("Saving ",name)
+            f.create_dataset(name,(data.shape[0], data.shape[1]), data=data)
+        else: 
+            print("Saving ",name)
+            print(name, data, data.shape)
+            f.create_dataset(name, (data.shape[0], ), data=data)
+
+    f.close()
+
 
 def check_start_seed(filename):
 
@@ -166,5 +208,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
+    # main(args)
+
+    
+    dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_10_eps_10'
+    h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_10.h5py'
+    pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
+
 

@@ -60,12 +60,21 @@ def load_demo_stats(path):
     stats_path = os.path.join(path, 'obs_stats.json')
     with open(stats_path, 'r') as f:
         stats = json.load(f)
-    return (
-        np.array(stats['obs_mean']), 
-        np.array(stats['obs_std']),
-        stats['reward_scale'],
-        stats['target_return'],
-    )
+    ## TODO: delete this try when new version of model is loaded:
+    try:
+        return (
+            np.array(stats['obs_mean']), 
+            np.array(stats['obs_std']),
+            stats['reward_scale'],
+            stats['target_return'],
+        )
+    except:
+        return (
+            np.array(stats['obs_mean']), 
+            np.array(stats['obs_std']),
+            None,
+            None,
+        )
 
 def load_transformer(model_dir, device):
     if model_dir.split('/')[-1] == 'model.pt':
@@ -73,11 +82,19 @@ def load_transformer(model_dir, device):
     config_path = os.path.join(model_dir, 'config.yaml')
     with open(config_path, 'r') as stream:
         config = yaml.safe_load(stream)
+    if config['env']['value'] == 'waymo':
+        state_dim= 325
+        act_dim = 2
+        max_ep_len = 300
+    else:
+        state_dim = config['state_dim']['value']
+        act_dim = config['act_dim']['value']
+        max_ep_len = config['max_ep_len']['value']
     model = DecisionTransformer(
-        state_dim=config['state_dim']['value'],
-        act_dim=config['act_dim']['value'],
+        state_dim=state_dim,
+        act_dim=act_dim,
         max_length=config['K']['value'],
-        max_ep_len=config['max_ep_len']['value'],
+        max_ep_len=max_ep_len,
         hidden_size=config['embed_dim']['value'], # default 128
         n_layer=config['n_layer']['value'],
         n_head=config['n_head']['value'],

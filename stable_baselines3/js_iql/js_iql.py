@@ -264,7 +264,11 @@ class JumpStartIQL(IQL):
             self.hist_obs = np.concatenate([self.hist_obs, new_obs], axis=0)
             assert len(self.hist_obs.shape) == 2
             self.hist_re[-1] = rewards
-            pred_return = self.target_return[0,-1] - (rewards/self.reward_scale)
+            # TODO: delete this when updated env 
+            self.target_return = np.array([[500]])
+            ##############################
+            pred_return = self.target_return[0,-1] - (rewards/self.reward_scale) # question: what is prediction return?
+            # import pdb; pdb.set_trace() # 
             self.target_return = np.concatenate(
                 [self.target_return, pred_return.reshape(1, 1)], axis=1)
             t = self.timesteps[0, -1] + 1
