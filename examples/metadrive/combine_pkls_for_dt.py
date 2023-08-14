@@ -8,6 +8,7 @@ from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed, 
 
 import tqdm
 import pickle
+import h5py
 import os
 import matplotlib.pyplot as plt
 import re
@@ -16,9 +17,6 @@ import sys
 sys.path.append("examples/metadrive")
 from utils import AddCostToRewardEnv
 from utils import estimate_action
-sys.path.append("examples/metadrive/map_action_to_acc")
-from visualize_map import plot_reachable_region
-
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
@@ -40,6 +38,47 @@ def save_data_to_pickle(filename, data):
 
     with open(filename, 'wb') as f:
         pickle.dump(existing_data, f)
+
+
+
+def pkls_to_h5py_for_bc(pkl_dir, h5py_path):
+
+    pkl_list = os.listdir(pkl_dir)
+    
+    trajectories = []
+    for pkl_fn in pkl_list:
+        with open(os.path.join(pkl_dir, pkl_fn), 'rb') as f:
+            try:
+                temp = pickle.load(f)
+                trajectories.extend(temp)
+            except EOFError:
+                print("........ skipping "+ pkl_fn +" ........")
+                
+    trajectories = sorted(trajectories, key=lambda x: x['seed'])
+    
+    traj_flatten = {}
+    f = h5py.File(h5py_path, 'w') 
+
+    for name in trajectories[0].keys():
+        data = np.array([path[name] for path in trajectories])
+        if name in ["rewards", "dones"]:
+            data = data.reshape(-1,1)
+            traj_flatten[name] = data.reshape(-1,1)
+        traj_flatten[name] = np.vstack(data)
+        print("flatten traj for ",name, traj_flatten[name].shape)
+    
+    for name in traj_flatten.keys():
+        data = traj_flatten[name] 
+        if len(data.shape) == 2:
+            print("Saving ",name)
+            f.create_dataset(name,(data.shape[0], data.shape[1]), data=data)
+        else: 
+            print("Saving ",name)
+            print(name, data, data.shape)
+            f.create_dataset(name, (data.shape[0], ), data=data)
+
+    f.close()
+
 
 def check_start_seed(filename):
 
@@ -74,7 +113,8 @@ def collect_rollout_in_one_seed(env, seed):
     ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
     N = acc.shape[0]
     speed = np.linalg.norm(vel, axis = 1)
-    for t in tqdm.trange(N, desc="Timestep"):
+    # for t in tqdm.trange(N, desc="Timestep"):
+    for t in range(N):
         action = np.array([heading_rate[t], acc[t]]) 
 
         # whatever the input action is overwrited to be zero (due to the replay policy)
@@ -110,8 +150,8 @@ def main(args):
     print("num of scenarios: ", num_scenarios) 
 
     # check starting scenarios:
-    start_seed = check_start_seed(args['dt_data_path'])
-    # start_seed = args['start_seed']
+    start_seed = args['start_seed']
+    print("----------------start_seed = "+str(start_seed)+"!------------")
     env = AddCostToRewardEnv(
     {
         "manual_control": False,
@@ -119,6 +159,8 @@ def main(args):
         "agent_policy":ReplayEgoCarPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": 10000,
+        "start_seed":args["start_seed"],
+        "evironment_num": args["num_of_scenarios"],
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": False,
@@ -131,25 +173,22 @@ def main(args):
                 lidar=dict(num_lasers=120, distance=50, num_others=4),
                 lane_line_detector=dict(num_lasers=12, distance=50),
                 side_detector=dict(num_lasers=160, distance=50)
-            ),
-    }
+            )
+    }, lamb=args["lamb"]
     )
 
     # init all recorded variables
     
     data = []
 
-    for seed in range(start_seed, start_seed + num_scenarios):
+    # for seed in range(start_seed, start_seed + num_scenarios):
+    for seed in tqdm.trange(num_scenarios, desc="seeds"):
+        seed += start_seed
         # import pdb; pdb.set_trace()
-        try: 
+        # print(seed)
 
-            data = collect_rollout_in_one_seed(env, seed)
-            save_data_to_pickle(args['dt_data_path'], data)
-        except:
-            print("skipping traj "+str(seed))
-            continue
-            
-
+        data = collect_rollout_in_one_seed(env, seed)
+        save_data_to_pickle(args['dt_data_path'], data)
     
 
     env.close()
@@ -164,9 +203,16 @@ if __name__ == "__main__":
     parser.add_argument('--start_seed', type=int, required=True)
     parser.add_argument('--dt_data_path', type=str, default='examples/metadrive/dt_pkl/test.pkl')
     parser.add_argument('--num_of_scenarios', type=str, default='2000')
+    parser.add_argument('--lamb', type=float, default=10.)
     # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
+    # main(args)
+
+    
+    dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_10_eps_10'
+    h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_10.h5py'
+    pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
+
 

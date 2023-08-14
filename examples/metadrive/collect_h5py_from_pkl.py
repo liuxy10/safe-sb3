@@ -131,7 +131,8 @@ def main(args):
             # ts, _, vel, _ = get_current_ego_trajectory(env,seed)
             ts, _, vel, acc, heading, heading_rate = get_current_ego_trajectory_old(env,seed)
             speed = np.linalg.norm(vel, axis = 1)
-            for t in tqdm.trange(acc.shape[0], desc="Timestep"):
+            # for t in tqdm.trange(acc.shape[0], desc="Timestep"):
+            for t in range(acc.shape[0]):
                 action = np.array([heading[t], acc[t]]) 
 
                 # whatever the input action is overwrited to be zero (due to the replay policy)
