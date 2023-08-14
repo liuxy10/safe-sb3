@@ -9,14 +9,14 @@ import numpy as np
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 from stable_baselines3 import BC
-from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils import AddCostToRewardEnv
+from stable_baselines3.common.monitor import Monitor
 import matplotlib.pyplot as plt
 
 from visualize import plot_waymo_vs_pred
 
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
 
 
@@ -53,6 +53,7 @@ def main(args):
             ),
     }, 
     )
+    # env = Monitor(env, info_keywords=("is_success",))
     env.seed(args["env_seed"])
 
     exp_name = "bc-waymo-es" + str(args["env_seed"])
@@ -61,13 +62,15 @@ def main(args):
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
    # Save a checkpoint every given steps
-    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-    #                                      name_prefix=exp_name)
+    checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
+                                         name_prefix=exp_name)
+   
     
     model.learn(
                 args['steps'], 
                 data_dir = args['h5py_path'], 
-                # callback=checkpoint_callback, 
+                callback=checkpoint_callback, 
+                # callback=eval_callback,
                 use_diff_action_space = args['use_diff_action_space']
                 )
 
@@ -109,9 +112,12 @@ def test(args):
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)
+    eval_callback = EvalCallback(env)
 
-    for seed in range(0, num_scenarios):
-        plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+    mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False)
+    print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
+    # for seed in range(0, num_scenarios):
+    #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
       
     del model
     env.close()
@@ -133,12 +139,12 @@ if __name__ == "__main__":
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
-    parser.add_argument('--save_freq', type=int, default=int(10000))
+    parser.add_argument('--save_freq', type=int, default=int(10))
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    # main(args)
+    test(args)
 
 
 

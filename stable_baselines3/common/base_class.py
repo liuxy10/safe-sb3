@@ -217,7 +217,7 @@ class BaseAlgorithm(ABC):
             if not is_wrapped(env, Monitor) and monitor_wrapper:
                 if verbose >= 1:
                     print("Wrapping the env with a `Monitor` wrapper")
-                env = Monitor(env)
+                env = Monitor(env, info_keywords=("is_success",))
             if verbose >= 1:
                 print("Wrapping the env in a DummyVecEnv.")
             env = DummyVecEnv([lambda: env])  # type: ignore[list-item, return-value]

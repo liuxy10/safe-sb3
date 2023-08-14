@@ -74,6 +74,7 @@ def evaluate_policy(
     n_envs = env.num_envs
     episode_rewards = []
     episode_lengths = []
+    episode_success_rates = []
 
     episode_counts = np.zeros(n_envs, dtype="int")
     # Divides episodes among different sub environments in the vector as evenly as possible
@@ -84,6 +85,8 @@ def evaluate_policy(
     observations = env.reset()
     states = None
     episode_starts = np.ones((env.num_envs,), dtype=bool)
+
+    print("[check] code runs here" )
     while (episode_counts < episode_count_targets).any():
         actions, states = model.predict(
             observations,  # type: ignore[arg-type]
@@ -100,12 +103,16 @@ def evaluate_policy(
                 reward = rewards[i]
                 done = dones[i]
                 info = infos[i]
+                # import pdb; pdb.set_trace()
+                # print(info)
+                
                 episode_starts[i] = done
 
                 if callback is not None:
                     callback(locals(), globals())
 
                 if dones[i]:
+                    # print("info, is_monitor_wrapped",info, is_monitor_wrapped)
                     if is_monitor_wrapped:
                         # Atari wrapper can send a "done" signal when
                         # the agent loses a life, but it does not correspond
@@ -114,13 +121,17 @@ def evaluate_policy(
                             # Do not trust "done" with episode endings.
                             # Monitor wrapper includes "episode" key in info if environment
                             # has been wrapped with it. Use those rewards instead.
+                            
                             episode_rewards.append(info["episode"]["r"])
                             episode_lengths.append(info["episode"]["l"])
+                            
+                            episode_success_rates.append(info['arrive_dest'])
                             # Only increment at the real end of an episode
                             episode_counts[i] += 1
                     else:
                         episode_rewards.append(current_rewards[i])
                         episode_lengths.append(current_lengths[i])
+                        episode_success_rates.append(info['arrive_dest'])
                         episode_counts[i] += 1
                     current_rewards[i] = 0
                     current_lengths[i] = 0
@@ -132,8 +143,9 @@ def evaluate_policy(
 
     mean_reward = np.mean(episode_rewards)
     std_reward = np.std(episode_rewards)
+    mean_success_rate = np.mean(episode_success_rates)
     if reward_threshold is not None:
         assert mean_reward > reward_threshold, "Mean reward below threshold: " f"{mean_reward:.2f} < {reward_threshold:.2f}"
     if return_episode_rewards:
         return episode_rewards, episode_lengths
-    return mean_reward, std_reward
+    return mean_reward, std_reward, mean_success_rate
