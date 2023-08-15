@@ -111,10 +111,11 @@ class JumpStartIQL(IQL):
             assert reward_scale is not None
             assert obs_mean is not None
             assert obs_std is not None
+            self.obs_mean = th.from_numpy(obs_mean).to(device=device)
+            self.obs_std = th.from_numpy(obs_std).to(device=device)
         self.target_return_init = target_return
         self.reward_scale = reward_scale
-        self.obs_mean = th.from_numpy(obs_mean).to(device=device)
-        self.obs_std = th.from_numpy(obs_std).to(device=device)
+        
 
     def _sample_action(
         self,

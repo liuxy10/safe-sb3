@@ -16,7 +16,7 @@ sys.path.append("examples/metadrive")
 from utils import AddCostToRewardEnv
 from utils import estimate_action
 sys.path.append("examples/metadrive/map_action_to_acc")
-from visualize_map import plot_reachable_region
+# from visualize_map import plot_reachable_region
 
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90

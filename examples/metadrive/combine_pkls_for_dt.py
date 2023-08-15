@@ -168,12 +168,12 @@ def main(args):
                 #     show_lidar=True,
                 #     # no_wheel_friction=True,
                 #     lidar=dict(num_lasers=0))
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            )
+                 "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=20, distance=50) # 160
+               )
     }, lamb=args["lamb"]
     )
 
@@ -211,8 +211,8 @@ if __name__ == "__main__":
     # main(args)
 
     
-    dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_10_eps_10'
-    h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_10.h5py'
+    dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10'
+    h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py'
     pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
 
 

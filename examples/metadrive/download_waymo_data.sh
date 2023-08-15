@@ -5,8 +5,8 @@
 cd ~/src/data/metadrive/tfrecord_9
 
 # Define the range of numbers you want to iterate over
-start=1
-end=50
+start=50
+end=100
 # Iterate over the range of numbers
 for ((i=start; i<=end; i++)); do
     # Format the number with leading zeros to ensure it has 5 digits

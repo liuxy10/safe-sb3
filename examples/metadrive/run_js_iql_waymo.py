@@ -23,7 +23,11 @@ def main(args):
     device = args["device"]
     lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
+    use_transformer_expert = False
+    print("args['use_transformer_expert']", args["use_transformer_expert"])
+    print("use_transformer_expert",use_transformer_expert)
     
+    import pdb; pdb.set_trace()
 
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
@@ -64,7 +68,7 @@ def main(args):
     if use_transformer_expert:
         experiment_name += '_transformer'
     tensorboard_log = os.path.join(root_dir, experiment_name)
-
+    # print("use_transformer_expert",use_transformer_expert)
     if use_transformer_expert:
         loaded_stats = js_utils.load_demo_stats(
             path=args["expert_model_dir"]
@@ -77,6 +81,7 @@ def main(args):
         ## TODO: delete this when updated model is loaded :
         if reward_scale == None:
             reward_scale, target_return = 100, 500
+    
 
     
 
@@ -85,6 +90,8 @@ def main(args):
         expert_policy = js_utils.load_expert_policy(
             model_dir=args['expert_model_dir'], env=env, device=device
         )
+        ## TODO: delete this when updated model is loaded :
+        reward_scale, target_return = 100, 500
 
     model = JumpStartIQL(
         "MlpPolicy",
@@ -113,9 +120,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cuda")
     parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230811_045829-300g6mvp')
-    parser.add_argument(
-        '--use_transformer_expert', action='store_true', default=True
-    )
+    parser.add_argument('--use_transformer_expert',  type=bool, default=False)
     parser.add_argument('--lambda', '-lam', type=float, default=10)
     parser.add_argument('--num_of_scenarios', type=str, default="10")
     parser.add_argument('--steps', '-st', type=int, default=int(1e7))

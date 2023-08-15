@@ -45,31 +45,30 @@ def main(args):
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": False,
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            ),
+               "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=20, distance=50)) # 160,
     }, 
     )
     # env = Monitor(env, info_keywords=("is_success",))
     env.seed(args["env_seed"])
 
-    exp_name = "bc-waymo-es" + str(args["env_seed"])
+    exp_name = "bc-waymo-cost-default"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
 
     model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
    # Save a checkpoint every given steps
-    checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-                                         name_prefix=exp_name)
+    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
+    #                                      name_prefix=exp_name)
    
     
     model.learn(
                 args['steps'], 
                 data_dir = args['h5py_path'], 
-                callback=checkpoint_callback, 
+                # callback=checkpoint_callback, 
                 # callback=eval_callback,
                 use_diff_action_space = args['use_diff_action_space']
                 )
@@ -77,6 +76,7 @@ def main(args):
     
     del model
     env.close()
+
 
 def test(args):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
@@ -98,12 +98,11 @@ def test(args):
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": True,
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            ),
+            "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=20, distance=50)) # 160,
     },
     )
 
@@ -112,9 +111,9 @@ def test(args):
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)
-    eval_callback = EvalCallback(env)
+    eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
 
-    mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=10, deterministic=True, render=False)
+    mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
     print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
     # for seed in range(0, num_scenarios):
     #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
@@ -142,8 +141,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
-    test(args)
+    main(args)
+    # test(args)
 
 
 

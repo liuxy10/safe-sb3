@@ -9,7 +9,7 @@ from metadrive.component.vehicle_model.bicycle_model import BicycleModel
 
 
 class AddCostToRewardEnv(WaymoEnv):
-    def __init__(self, wrapped_env, lamb=10.):
+    def __init__(self, wrapped_env, lamb=1.):
         """Initialize the class.
         
         Args: 
