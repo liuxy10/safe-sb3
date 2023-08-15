@@ -115,10 +115,13 @@ def collect_rollout_in_one_seed(env, seed):
     speed = np.linalg.norm(vel, axis = 1)
     # for t in tqdm.trange(N, desc="Timestep"):
     for t in range(N):
-        action = np.array([heading_rate[t], acc[t]]) 
+        # action = np.array([heading_rate[t], acc[t]]) 
+        action = np.array([0,0]) 
 
         # whatever the input action is overwrited to be zero (due to the replay policy)
         obs, reward, done, info = env.step(action) 
+        if reward < 0:
+            print("actual reward, pure reward, cost ", reward, info['step_reward'])
         obs_rec = np.concatenate((obs_rec, obs.reshape(1, obs.shape[0])))
         ac_rec = np.concatenate((ac_rec, action.reshape(1, action.shape[0])))
         re_rec = np.concatenate((re_rec, np.array([reward])))

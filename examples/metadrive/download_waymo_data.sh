@@ -5,10 +5,10 @@
 cd ~/src/data/metadrive/tfrecord_9
 
 # Define the range of numbers you want to iterate over
-start=50
-end=100
+start=0
+end=2
 # Iterate over the range of numbers
-for ((i=start; i<=end; i++)); do
+for ((i=start; i<end; i++)); do
     # Format the number with leading zeros to ensure it has 5 digits
     formatted_number=$(printf "%05d" "$i")
 
