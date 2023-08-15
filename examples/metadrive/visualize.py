@@ -247,7 +247,7 @@ def show_negative_reward_scenarios(args, ill_seeds):
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": False,
+        "use_render": True,
         "reactive_traffic": False,
                "vehicle_config": dict(
                # no_wheel_friction=True,
@@ -284,7 +284,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--h5py_path', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9_old')
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9_10000')
     parser.add_argument('--model_path', '-out', type=str, default='examples/metadrive/example_policy/bc-waymo-es0.zip')
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)

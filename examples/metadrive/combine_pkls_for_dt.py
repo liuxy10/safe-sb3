@@ -120,8 +120,9 @@ def collect_rollout_in_one_seed(env, seed):
 
         # whatever the input action is overwrited to be zero (due to the replay policy)
         obs, reward, done, info = env.step(action) 
-        if reward < 0:
-            print("actual reward, pure reward, cost ", reward, info['step_reward'])
+        # if reward < 0:
+            # assume info['out_of_road'] == True, 
+            # print(reward, info['step_reward'], info['cost'], info['out_of_road'])
         obs_rec = np.concatenate((obs_rec, obs.reshape(1, obs.shape[0])))
         ac_rec = np.concatenate((ac_rec, action.reshape(1, action.shape[0])))
         re_rec = np.concatenate((re_rec, np.array([reward])))
