@@ -52,7 +52,7 @@ def main(args):
                side_detector=dict(num_lasers=20, distance=50)) # 160,
     }, 
     )
-    # env = Monitor(env, info_keywords=("is_success",))
+   
     env.seed(args["env_seed"])
 
     exp_name = "bc-waymo-cost-default"
@@ -94,6 +94,7 @@ def test(args):
         "no_traffic": False,
         "agent_policy":PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
+        "start_seed": 10000, 
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
@@ -111,7 +112,7 @@ def test(args):
     model_dir = args["policy_load_dir"]
     model = BC("MlpPolicy", env)
     model.set_parameters(model_dir)
-    eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
+    # eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
 
     mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
     print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
@@ -131,13 +132,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-    parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_bc_policy')
     parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/bc-diff-peak.pt')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
-    parser.add_argument('--num_of_scenarios', type=str, default="10")
+    parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
-    parser.add_argument('--save_freq', type=int, default=int(10))
     args = parser.parse_args()
     args = vars(args)
 
