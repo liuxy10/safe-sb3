@@ -58,69 +58,43 @@ def main(args):
     exp_name = "bc-waymo-cost-default"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
+    if is_test:
+        # first update config to test config, including changing agent_policy (in bc), and specify test seed range
+        test_config = {
+            "agent_policy":PMKinematicsEgoPolicy,
+            "start_seed": 10000
+        }
+        env.config.update(test_config)
 
-    model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-   # Save a checkpoint every given steps
-    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-    #                                      name_prefix=exp_name)
-   
-    
-    model.learn(
-                args['steps'], 
-                data_dir = args['h5py_path'], 
-                # callback=checkpoint_callback, 
-                # callback=eval_callback,
-                use_diff_action_space = args['use_diff_action_space']
-                )
+        # then 
+        model = BC("MlpPolicy", env)
+        model_dir = args["policy_load_dir"]
+        model.set_parameters(model_dir)
+        # eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
 
-    
-    del model
-    env.close()
-
-
-def test(args):
-    from collect_h5py_from_pkl import get_current_ego_trajectory_old
-
-    file_list = os.listdir(args['pkl_dir'])
-    if args['num_of_scenarios'] == 'ALL':
-        num_scenarios = len(file_list)
+        mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
+        print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
+        # for seed in range(0, num_scenarios):
+        #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
     else:
-        num_scenarios = int(args['num_of_scenarios'])
 
-    print("num of scenarios: ", num_scenarios)
-    env = AddCostToRewardEnv(
-    {
-        "manual_control": False,
-        "no_traffic": False,
-        "agent_policy":PMKinematicsEgoPolicy,
-        "waymo_data_directory":args['pkl_dir'],
-        "start_seed": 10000, 
-        "case_num": num_scenarios,
-        "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": False,
-        "reactive_traffic": True,
-            "vehicle_config": dict(
-               # no_wheel_friction=True,
-               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
-               lane_line_detector=dict(num_lasers=12, distance=50), # 12
-               side_detector=dict(num_lasers=20, distance=50)) # 160,
-    },
-    )
 
-    env.seed(args["env_seed"])
+        model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+        # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
+        #                                      name_prefix=exp_name)
+
+        model.learn(
+                    args['steps'], 
+                    data_dir = args['h5py_path'], 
+                    use_diff_action_space = args['use_diff_action_space']
+                    )
+
     
-    model_dir = args["policy_load_dir"]
-    model = BC("MlpPolicy", env)
-    model.set_parameters(model_dir)
-    # eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
-
-    mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
-    print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
-    # for seed in range(0, num_scenarios):
-    #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
-      
     del model
     env.close()
+
+
+
 
 
 
@@ -140,8 +114,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    main(args, is_test = False)
+
 
 
 
