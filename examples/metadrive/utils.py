@@ -25,8 +25,8 @@ class AddCostToRewardEnv(WaymoEnv):
     def step(self, action):
         state, reward, done, info = super().step(action)
         new_reward = reward - self._lamb * info['cost']
-        if new_reward <0: 
-            print("new_reward, reward, info['cost'], ", new_reward, reward, info['cost'], info["out_of_road"] )
+        # if new_reward <0: 
+            # print("new_reward, reward, info['cost'], ", new_reward, reward, info['cost'], info["out_of_road"] )
         info["re"] = reward
         return state, new_reward, done, info
 

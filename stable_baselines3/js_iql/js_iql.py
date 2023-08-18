@@ -174,10 +174,13 @@ class JumpStartIQL(IQL):
                         timesteps,
                     )
                     unscaled_action = unscaled_action.detach().cpu().numpy()
+                    unscaled_action = unscaled_action.reshape(1,2)
+                    # print("[use_guide] unscaled_action.shape", unscaled_action.shape)
                 else:
                     unscaled_action, _ = self.expert_policy.predict(
                         self._last_obs, deterministic=False
                     )
+                    
             else:
                 # Note: when using continuous actions,
                 # we assume that the policy uses tanh to scale the action
@@ -258,7 +261,7 @@ class JumpStartIQL(IQL):
 
             # Select action randomly or according to policy
             actions, buffer_actions = self._sample_action(learning_starts, action_noise, env.num_envs)
-
+            # print("[js_iql] actions.shape, buffer_actions.shape ", actions.shape, buffer_actions.shape)
             # Rescale and perform action
             new_obs, rewards, dones, infos = env.step(actions)
 

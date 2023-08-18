@@ -17,6 +17,10 @@ python examples/metadrive/combine_pkls_for_dt.py --pkl_dir ~/src/data/metadrive/
 python examples/metadrive/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --h5py_path /home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py --use_diff_action_space True --num_of_scenarios 10000 --steps 1000000
 # python examples/metadrive/run_sac_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --use_diff_action_space True --output_dir ~/src/data/metadrive/saved_sac_policy/ --num_of_scenarios 900 --steps 1000000 --save_freq 10000
 
+# test policy: first comment main function & uncomment test function then run
+python examples/metadrive/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --policy_load_dir examples/metadrive/example_policy/bc-diff-peak.pt --use_diff_action_space True --num_of_scenarios 10000
+
+
 # train offline DT policy 
 python /home/xinyi/src/decision-transformer/gym/experiment_waymo.py 
 
@@ -25,8 +29,8 @@ python /home/xinyi/src/decision-transformer/gym/experiment_waymo.py
 # train SAC with BC JumpStart (compared with sac-waymo-es0/SAC_7 and bc-waymo-es0/BC_0)
 python examples/metadrive/run_js_sac_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/  --num_of_scenarios 10000 --steps 1000000 --device cuda --expert_model_dir tensorboard_log/bc-waymo-es0/BC_0/model.pt --use_diff_action=True
 # train iql with BC JumpStart
-python examples/metadrive/run_js_iql_waymo.py --use_transformer_expert False --pkl_dir ~/src/data/metadrive/pkl_9/  --num_of_scenarios 10000 --steps 1000000 --device cuda --expert_model_dir tensorboard_log/bc-waymo-es0/BC_0/model.pt --use_diff_action=True
+python examples/metadrive/run_js_iql_waymo.py --use_transformer_expert False --pkl_dir ~/src/data/metadrive/pkl_9/  --num_of_scenarios 10000 --steps 1000000 --device cpu  tensorboard_log/bc-waymo-es0/BC_0/model.pt --use_diff_action=True
 
-python examples/metadrive/run_js_iql_waymo.py --use_transformer_expert True --pkl_dir ~/src/data/metadrive/pkl_9/  --num_of_scenarios 10000 --steps 1000000 --device cuda --expert_model_dir  --use_diff_action=True
+python examples/metadrive/run_js_iql_waymo.py --use_transformer_expert True --pkl_dir ~/src/data/metadrive/pkl_9/  --num_of_scenarios 10000 --steps 1000000 --device cuda  --use_diff_action=True
 
 

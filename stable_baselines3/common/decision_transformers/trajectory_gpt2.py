@@ -583,22 +583,15 @@ class GPT2Model(GPT2PreTrainedModel):
             self.h[layer].attn.prune_heads(heads)
 
     @add_start_docstrings_to_model_forward(GPT2_INPUTS_DOCSTRING)
-    try:
-        @add_code_sample_docstrings(
 
-            tokenizer_class=_TOKENIZER_FOR_DOC,
-            checkpoint="gpt2",
-            output_type=BaseModelOutputWithPastAndCrossAttentions,
-            config_class=_CONFIG_FOR_DOC,
-        )
-    except:
-        @add_code_sample_docstrings(
+    @add_code_sample_docstrings(
 
-            processor_class =_TOKENIZER_FOR_DOC, 
-            checkpoint="gpt2",
-            output_type=BaseModelOutputWithPastAndCrossAttentions,
-            config_class=_CONFIG_FOR_DOC,
-        )
+        tokenizer_class=_TOKENIZER_FOR_DOC,
+        checkpoint="gpt2",
+        output_type=BaseModelOutputWithPastAndCrossAttentions,
+        config_class=_CONFIG_FOR_DOC,
+    )
+
 
     def forward(
             self,
