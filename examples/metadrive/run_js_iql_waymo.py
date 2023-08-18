@@ -23,11 +23,10 @@ def main(args):
     device = args["device"]
     lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
-    use_transformer_expert = False
-    print("args['use_transformer_expert']", args["use_transformer_expert"])
+    
     print("use_transformer_expert",use_transformer_expert)
     
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
@@ -45,13 +44,13 @@ def main(args):
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
+        "horizon": 90/5,
         "reactive_traffic": False,
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            ),
+                 "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=20, distance=50)) # 160,
     }, lamb= lamb
     )
     env.seed(args["env_seed"])
@@ -106,10 +105,17 @@ def main(args):
         verbose=1,
         device=device,
     )
+    if args["restart_from_iql_model"] != "":
+        print("-"*100)
+        print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
+        model_dir = args["restart_from_iql_model"]
+        model.set_parameters(model_dir)
     model.learn(total_timesteps=args["steps"])
 
     del model
     env.close()
+
+    
 
 
 if __name__ == "__main__":
@@ -119,14 +125,16 @@ if __name__ == "__main__":
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cuda")
-    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230811_045829-300g6mvp')
+    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230816_194555-1q61e1d2')
     parser.add_argument('--use_transformer_expert',  type=bool, default=False)
-    parser.add_argument('--lambda', '-lam', type=float, default=10)
-    parser.add_argument('--num_of_scenarios', type=str, default="10")
-    parser.add_argument('--steps', '-st', type=int, default=int(1e7))
+    parser.add_argument('--lambda', '-lam', type=float, default=1.)
+    parser.add_argument('--num_of_scenarios', type=str, default="100")
+    parser.add_argument('--steps', '-st', type=int, default=int(1e6))
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
+    parser.add_argument('--restart_from_iql_model', '-re', type=str, default="")
     args = parser.parse_args()
     args = vars(args)
 
     main(args)
+    test(args)
