@@ -109,7 +109,11 @@ class Monitor(gym.Wrapper[ObsType, ActType, ObsType, ActType]):
             ep_len = len(self.rewards)
             ep_info = {"r": round(ep_rew, 6), "l": ep_len, "t": round(time.time() - self.t_start, 6)}
             for key in self.info_keywords:
-                ep_info[key] = info[key]
+                try:
+                    ep_info[key] = info[key]
+                except:
+                    # print("key not found", info, key, ep_info)
+                    pass
             if info.get("cost") is not None:
                 ep_cost = sum(self.costs)
                 # ep_weighted_cost = sum(self.weighted_costs)

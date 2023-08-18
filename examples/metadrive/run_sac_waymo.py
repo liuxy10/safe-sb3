@@ -38,37 +38,32 @@ def main(args):
     {
         "manual_control": False,
         "no_traffic": False,
-        # "agent_policy":EnvInputHeadingAccPolicy,
         "agent_policy": PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": False,
-                "vehicle_config": dict(
-                # no_wheel_friction=True,
-                lidar=dict(num_lasers=120, distance=50, num_others=4),
-                lane_line_detector=dict(num_lasers=12, distance=50),
-                side_detector=dict(num_lasers=160, distance=50)
-            ),
-    }, 
+               "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=20, distance=50)) # 160,
+    },lamb = args["lambda"]
     )
-
-
+   
     env.seed(args["env_seed"])
 
-    exp_name = "sac-waymo-es" + str(args["env_seed"])
+    exp_name = "sac-waymo--cost-default"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
     
     model = SAC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1, buffer_size = 100000)
     # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
     # Save a checkpoint every given steps
-    checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-                                         name_prefix=exp_name)
     
     model.learn(args['steps'], 
-                callback=checkpoint_callback#, 
+                # callback=checkpoint_callback#, 
                 # use_diff_action_space = args['use_diff_action_space']
                 )
         
@@ -80,6 +75,7 @@ def main(args):
 
 
 def test(args):
+    from collect_h5py_from_pkl import get_current_ego_trajectory_old
 
     file_list = os.listdir(args['pkl_dir'])
     if args['num_of_scenarios'] == 'ALL':
@@ -94,38 +90,34 @@ def test(args):
         "no_traffic": False,
         "agent_policy":PMKinematicsEgoPolicy,
         "waymo_data_directory":args['pkl_dir'],
+        "start_seed": 10000, 
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
         "use_render": False,
         "reactive_traffic": True,
-        "vehicle_config": dict(
-        lidar=dict(num_lasers=120, distance=50, num_others=4),
-        lane_line_detector=dict(num_lasers=12, distance=50),
-        side_detector=dict(num_lasers=160, distance=50)
-        ),
-    },
+            "vehicle_config": dict(
+               # no_wheel_friction=True,
+               lidar=dict(num_lasers=240, distance=50, num_others=4), # 120
+               lane_line_detector=dict(num_lasers=12, distance=50), # 12
+               side_detector=dict(num_lasers=160, distance=50)) # 160,
+    },lamb = args["lambda"]
     )
 
 
     env.seed(args["env_seed"])
-    
-    model_dir = args["policy_load_dir"]
 
     model = SAC("MlpPolicy", env)
+    model_dir = args["policy_load_dir"]
     model.set_parameters(model_dir)
 
-    avg_cost, avg_rew = 0,0
-    for seed in range(0, num_scenarios):
-        rew, cost = plot_waymo_vs_pred(env, model, seed, 'sac', savefig_dir = args["savefig_dir"])
-        avg_rew +=  rew
-        avg_cost +=  cost
-        print("seed,  rew, cost = ", seed, rew, cost)
-    avg_cost/= num_scenarios
-    avg_rew/=num_scenarios
-
-    print("avg. rew, cost out of "+str(num_scenarios)+" scenarios = ",avg_rew, avg_cost )
+    mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
+    print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
+    # for seed in range(0, num_scenarios):
+    #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+      
     del model
     env.close()
+
 
 
 
@@ -134,18 +126,16 @@ def test(args):
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_20')
-    parser.add_argument('--output_dir', '-out', type=str, default='examples/metadrive/saved_sac_policy')
-    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/sac-diff-peak.pt')
-    parser.add_argument('--savefig_dir', type=str, default= "examples/metadrive/figs/sac_vs_waymo/diff_action/test_20/")
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
+    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/sac-diff-peak-1000.pt')
+ 
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--num_of_scenarios', type=str, default="10")
+    parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
-    parser.add_argument('--save_freq', type=int, default=int(10000))
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    # test(args)
+    # main(args)
+    test(args)
