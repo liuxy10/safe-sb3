@@ -11,7 +11,7 @@ import numpy as np
 # from trafficgen.utils.typedef import AgentType, RoadLineType, RoadEdgeType
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy, EnvInputPolicy
-
+from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import JumpStartIQL
 from stable_baselines3.js_sac import utils as js_utils
 
@@ -19,7 +19,7 @@ from stable_baselines3.js_sac import utils as js_utils
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
-def main(args):
+def main(args, is_test = False):
     device = args["device"]
     lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
@@ -33,7 +33,6 @@ def main(args):
         num_scenarios = len(file_list)
     else:
         num_scenarios = int(args['num_of_scenarios'])
-    lamb = args["lambda"]
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
     {
@@ -91,37 +90,69 @@ def main(args):
         )
         ## TODO: delete this when updated model is loaded :
         reward_scale, target_return = 100, 500
+    
+    if is_test:
+        # first update config to test config, including changing agent_policy (in bc), and specify test seed range
+        test_config = {
+            "agent_policy":PMKinematicsEgoPolicy,
+            "start_seed": 10000,
+            "horizon": 300/5
+        }
+        env.config.update(test_config)
 
-    model = JumpStartIQL(
-        "MlpPolicy",
-        expert_policy,
-        env,
-        use_transformer_expert=use_transformer_expert,
-        target_return=target_return,
-        reward_scale=reward_scale,
-        obs_mean=obs_mean,
-        obs_std=obs_std,
-        tensorboard_log=tensorboard_log,
-        verbose=1,
-        device=device,
-    )
-    if args["restart_from_iql_model"] != "":
-        print("-"*100)
-        print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
-        model_dir = args["restart_from_iql_model"]
+        # then load policy and evaluate 
+        model = JumpStartIQL(
+            "MlpPolicy",
+            expert_policy,
+            env,
+            use_transformer_expert=use_transformer_expert,
+            target_return=target_return,
+            reward_scale=reward_scale,
+            obs_mean=obs_mean,
+            obs_std=obs_std,
+            device=device,
+        )
+        model_dir = args["policy_load_dir"]
         model.set_parameters(model_dir)
-    model.learn(total_timesteps=args["steps"])
+        mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=500, deterministic=True, render=False)
+        print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
+        # for seed in range(0, num_scenarios):
+        #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+    
+
+
+    else:
+        model = JumpStartIQL(
+            "MlpPolicy",
+            expert_policy,
+            env,
+            use_transformer_expert=use_transformer_expert,
+            target_return=target_return,
+            reward_scale=reward_scale,
+            obs_mean=obs_mean,
+            obs_std=obs_std,
+            tensorboard_log=tensorboard_log,
+            verbose=1,
+            device=device,
+        )
+        if args["restart_from_iql_model"] != "":
+            print("-"*100)
+            print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
+            model_dir = args["restart_from_iql_model"]
+            model.set_parameters(model_dir)
+        model.learn(total_timesteps=args["steps"])
 
     del model
     env.close()
 
-    
+
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9')
+    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/dt-JSiql-diff-peak-10000.pt')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cuda")
@@ -133,8 +164,8 @@ if __name__ == "__main__":
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
     parser.add_argument('--restart_from_iql_model', '-re', type=str, default="")
+    parser.add_argument('--is_test', '-test', type=bool, default=False)
     args = parser.parse_args()
     args = vars(args)
 
-    main(args)
-    test(args)
+    main(args, is_test = args['is_test'])

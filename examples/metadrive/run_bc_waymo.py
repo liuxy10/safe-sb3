@@ -62,7 +62,8 @@ def main(args, is_test = False):
         # first update config to test config, including changing agent_policy (in bc), and specify test seed range
         test_config = {
             "agent_policy":PMKinematicsEgoPolicy,
-            "start_seed": 10000
+            "start_seed": 10000,
+            "horizon": 90/5
         }
         env.config.update(test_config)
 
@@ -103,10 +104,11 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
+    parser.add_argument('--is_test', '-test', type=bool, default=False)
     args = parser.parse_args()
     args = vars(args)
 
-    main(args, is_test = False)
+    main(args, is_test = args['is_test'])
 
 
 
