@@ -25,7 +25,7 @@ WAYMO_SAMPLING_FREQ = 10
 
 
 
-def main(args):
+def main(args, is_test = False):
 
     
     file_list = os.listdir(args['pkl_dir'])
@@ -66,16 +66,15 @@ def main(args):
         }
         env.config.update(test_config)
 
-        # then 
+        # then load policy and evaluate 
         model = BC("MlpPolicy", env)
         model_dir = args["policy_load_dir"]
         model.set_parameters(model_dir)
-        # eval_callback = EvalCallback(env) # don't know how to use it to eval during training, but it seems unnecessary to do so in the first place
-
         mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
         print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
         # for seed in range(0, num_scenarios):
         #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+    
     else:
 
 
@@ -92,13 +91,6 @@ def main(args):
     
     del model
     env.close()
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__": 
