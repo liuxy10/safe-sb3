@@ -4,6 +4,7 @@ from datetime import datetime
 import metadrive
 import gym
 
+
 import h5py
 import os
 from datetime import datetime
@@ -16,9 +17,12 @@ from stable_baselines3 import JumpStartIQL
 from stable_baselines3.js_sac import utils as js_utils
 
 
+
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
+
+
 def main(args, is_test = False):
     device = args["device"]
     lamb = args["lambda"]
@@ -168,4 +172,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
+
+    print(args["is_test"])
     main(args, is_test = args['is_test'])

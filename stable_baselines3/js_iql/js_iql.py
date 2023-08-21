@@ -261,7 +261,6 @@ class JumpStartIQL(IQL):
 
             # Select action randomly or according to policy
             actions, buffer_actions = self._sample_action(learning_starts, action_noise, env.num_envs)
-            # print("[js_iql] actions.shape, buffer_actions.shape ", actions.shape, buffer_actions.shape)
             # Rescale and perform action
             new_obs, rewards, dones, infos = env.step(actions)
 
@@ -281,6 +280,7 @@ class JumpStartIQL(IQL):
 
             assert dones.shape == (1, )
             if dones:
+                
                 self.hist_obs = self._last_obs.reshape(1, self.obs_dim)
                 self.hist_ac= np.zeros((0, self.ac_dim))
                 self.hist_re = np.zeros(0)

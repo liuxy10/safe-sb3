@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 import re
 
 import sys
-sys.path.append("examples/metadrive")
+import sys
+sys.path.append("examples/metadrive/training")
 from utils import AddCostToRewardEnv
 from utils import estimate_action
 WAYMO_SAMPLING_FREQ = 10

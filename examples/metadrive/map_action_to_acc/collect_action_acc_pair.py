@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 import sys
-sys.path.append("examples/metadrive")
+sys.path.append("examples/metadrive/training")
 from utils import AddCostToRewardEnv_base
 from utils import get_acc_from_vel, get_local_from_heading, estimate_action
 np.set_printoptions(precision=3)

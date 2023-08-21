@@ -20,4 +20,3 @@ for ((i=start; i<end; i++)); do
 
 done
 
-# gcloud storage cp gs://waymo_open_dataset_motion_v_1_1_0/uncompressed/scenario/training/training.tfrecord-00001-of-01001 .

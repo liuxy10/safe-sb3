@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import sys
-sys.path.append("examples/metadrive")
+import sys
+sys.path.append("examples/metadrive/training")
 from utils import get_acc_from_vel, get_local_from_heading, estimate_action, query_nearest_value_1d
 
 def plot_action_as_variable(dat):

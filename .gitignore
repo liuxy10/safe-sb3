@@ -56,4 +56,4 @@ MUJOCO_LOG.TXT
 
 tensorboard*
 
-data*
+# data*
