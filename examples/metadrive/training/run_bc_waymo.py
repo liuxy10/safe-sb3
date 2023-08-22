@@ -97,9 +97,11 @@ def main(args, is_test = False):
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
+
+    # waymo data argument
     parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
-
+    
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
