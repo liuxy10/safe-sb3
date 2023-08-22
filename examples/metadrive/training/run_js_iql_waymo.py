@@ -92,15 +92,13 @@ def main(args, is_test = False):
         expert_policy = js_utils.load_expert_policy(
             model_dir=args['expert_model_dir'], env=env, device=device
         )
-        ## TODO: delete this when updated model is loaded :
-        reward_scale, target_return = 100, 500
     
     if is_test:
         # first update config to test config, including changing agent_policy (in bc), and specify test seed range
         test_config = {
             "agent_policy":PMKinematicsEgoPolicy,
             "start_seed": 10000,
-            "horizon": 300/5
+            "horizon": 90/5
         }
         env.config.update(test_config)
 
