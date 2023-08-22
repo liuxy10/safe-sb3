@@ -25,7 +25,7 @@ WAYMO_SAMPLING_FREQ = 10
 
 
 
-def main(args, is_test = False):
+def main(args):
 
     
     file_list = os.listdir(args['pkl_dir'])
@@ -58,36 +58,17 @@ def main(args, is_test = False):
     exp_name = "bc-waymo-cost-default"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
-    if is_test:
-        # first update config to test config, including changing agent_policy (in bc), and specify test seed range
-        test_config = {
-            "agent_policy":PMKinematicsEgoPolicy,
-            "start_seed": 10000,
-            "horizon": 90/5
-        }
-        env.config.update(test_config)
-
-        # then load policy and evaluate 
-        model = BC("MlpPolicy", env)
-        model_dir = args["policy_load_dir"]
-        model.set_parameters(model_dir)
-        mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=50, deterministic=True, render=False)
-        print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
-        # for seed in range(0, num_scenarios):
-        #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
-    
-    else:
 
 
-        model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-        # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-        #                                      name_prefix=exp_name)
+    model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
+    #                                      name_prefix=exp_name)
 
-        model.learn(
-                    args['steps'], 
-                    data_dir = args['h5py_path'], 
-                    use_diff_action_space = args['use_diff_action_space']
-                    )
+    model.learn(
+                args['steps'], 
+                data_dir = args['h5py_path'], 
+                use_diff_action_space = args['use_diff_action_space']
+                )
 
     
     del model
@@ -107,12 +88,11 @@ if __name__ == "__main__":
     parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
     # for test eval purpose
-    parser.add_argument('--is_test', '-test', type=bool, default=False)
     parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/bc-diff-peak.pt')
     args = parser.parse_args()
     args = vars(args)
 
-    main(args, is_test = args['is_test'])
+    main(args)
 
 
 

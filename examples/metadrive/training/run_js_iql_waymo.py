@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
 
 
-def main(args, is_test = False):
+def main(args):
     device = args["device"]
     lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
@@ -92,29 +92,26 @@ def main(args, is_test = False):
         expert_policy = js_utils.load_expert_policy(
             model_dir=args['expert_model_dir'], env=env, device=device
         )
-    
-    
 
-    else:
-        model = JumpStartIQL(
-            "MlpPolicy",
-            expert_policy,
-            env,
-            use_transformer_expert=use_transformer_expert,
-            target_return=target_return,
-            reward_scale=reward_scale,
-            obs_mean=obs_mean,
-            obs_std=obs_std,
-            tensorboard_log=tensorboard_log,
-            verbose=1,
-            device=device,
-        )
-        if args["restart_from_iql_model"] != "":
-            print("-"*100)
-            print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
-            model_dir = args["restart_from_iql_model"]
-            model.set_parameters(model_dir)
-        model.learn(total_timesteps=args["steps"])
+    model = JumpStartIQL(
+        "MlpPolicy",
+        expert_policy,
+        env,
+        use_transformer_expert=use_transformer_expert,
+        target_return=target_return,
+        reward_scale=reward_scale,
+        obs_mean=obs_mean,
+        obs_std=obs_std,
+        tensorboard_log=tensorboard_log,
+        verbose=1,
+        device=device,
+    )
+    if args["restart_from_iql_model"] != "":
+        print("-"*100)
+        print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
+        model_dir = args["restart_from_iql_model"]
+        model.set_parameters(model_dir)
+    model.learn(total_timesteps=args["steps"])
 
     del model
     env.close()
@@ -138,10 +135,9 @@ if __name__ == "__main__":
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
     parser.add_argument('--restart_from_iql_model', '-re', type=str, default="")
-    parser.add_argument('--is_test', '-test', type=bool, default=False)
     args = parser.parse_args()
     args = vars(args)
 
 
-    print(args["is_test"])
-    main(args, is_test = args['is_test'])
+
+    main(args)

@@ -2,8 +2,6 @@
 # run bc training
 python examples/metadrive/training/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --h5py_path /home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py --use_diff_action_space True --num_of_scenarios 10000 --steps 1000000
 
-# test policy: 
-python examples/metadrive/training/run_bc_waymo.py --pkl_dir ~/src/data/metadrive/pkl_9/ --policy_load_dir examples/metadrive/example_policy/bc-diff-peak-10000.pt --use_diff_action_space True --num_of_scenarios 10000 --is_test True
 
 
 # train offline DT policy 

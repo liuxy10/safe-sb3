@@ -58,31 +58,12 @@ def main(args, is_test = False):
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
     
-    if is_test:
-        # first update config to test config, including changing agent_policy (in bc), and specify test seed range
-        test_config = {
-            "agent_policy":PMKinematicsEgoPolicy,
-            "start_seed": 10000,
-            "horizon": 90/5
-        }
-        env.config.update(test_config)
 
-        # then load policy and evaluate 
-        model = SAC("MlpPolicy", env)
-        model_dir = args["policy_load_dir"]
-        model.set_parameters(model_dir)
-        mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=00, deterministic=True, render=False)
-        print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
-        # for seed in range(0, num_scenarios):
-        #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
+    model = SAC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1, buffer_size = 100000)
+    # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
+    # Save a checkpoint every given steps
     
-    else:
-
-        model = SAC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1, buffer_size = 100000)
-        # model = PPO("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-        # Save a checkpoint every given steps
-        
-        model.learn(args['steps'])
+    model.learn(args['steps'])
 
     
     del model
@@ -100,11 +81,10 @@ if __name__ == "__main__":
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
-    parser.add_argument('--is_test', '-test', type=bool, default=False)
     args = parser.parse_args()
     args = vars(args)
 
-    main(args, is_test = args['is_test'])
+    main(args)
 
 
 
