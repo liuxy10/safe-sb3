@@ -161,7 +161,7 @@ class BC(OffPolicyAlgorithm):
             reward = f['rewards'][:]
             terminal = f['dones'][:]
             # TODO: add cost here in the function
-            cost = f['rewards'][:]
+            cost = f['costs'][:]
         size = min(obs.shape[0], self.replay_buffer.buffer_size) - 1
         for i in range(size):
             self.replay_buffer.add(

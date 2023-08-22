@@ -93,35 +93,7 @@ def main(args, is_test = False):
             model_dir=args['expert_model_dir'], env=env, device=device
         )
     
-    if is_test:
-        # first update config to test config, including changing agent_policy (in bc), and specify test seed range
-        test_config = {
-            "agent_policy":PMKinematicsEgoPolicy,
-            "start_seed": 10000,
-            "horizon": 90/5
-        }
-        env.config.update(test_config)
-
-        # then load policy and evaluate 
-        model = JumpStartIQL(
-            "MlpPolicy",
-            expert_policy,
-            env,
-            use_transformer_expert=use_transformer_expert,
-            target_return=target_return,
-            reward_scale=reward_scale,
-            obs_mean=obs_mean,
-            obs_std=obs_std,
-            device=device,
-        )
-        model_dir = args["policy_load_dir"]
-        model.set_parameters(model_dir)
-        mean_reward, std_reward, mean_success_rate=evaluate_policy(model, env, n_eval_episodes=500, deterministic=True, render=False)
-        print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
-        # for seed in range(0, num_scenarios):
-        #     plot_waymo_vs_pred(env, model, seed, 'bc', savefig_dir = "examples/metadrive/figs/bc_vs_waymo/diff_action")
     
-
 
     else:
         model = JumpStartIQL(

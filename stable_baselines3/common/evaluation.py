@@ -85,7 +85,8 @@ def evaluate_policy(
     observations = env.reset()
     states = None
     episode_starts = np.ones((env.num_envs,), dtype=bool)
-
+    
+    
 
     while (episode_counts < episode_count_targets).any():
         actions, states = model.predict(
@@ -97,6 +98,7 @@ def evaluate_policy(
         new_observations, rewards, dones, infos = env.step(actions)
         current_rewards += rewards
         current_lengths += 1
+        # env.reset(force_seed = episode_counts)
         for i in range(n_envs):
             if episode_counts[i] < episode_count_targets[i]:
                 # unpack values so that the callback can access the local variables
@@ -135,6 +137,12 @@ def evaluate_policy(
                         episode_counts[i] += 1
                     current_rewards[i] = 0
                     current_lengths[i] = 0
+                    # env.envs[0]._reset_global_seed(force_seed = episode_counts + int(env.envs[0].config['start_case_index']))
+                    # seems like the random seed is not working
+                    
+                    # import pdb; pdb.set_trace()
+                    
+                    # print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
 
         observations = new_observations
 
