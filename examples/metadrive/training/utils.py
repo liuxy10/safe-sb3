@@ -18,6 +18,7 @@ class AddCostToRewardEnv(WaymoEnv):
         """
         super().__init__(wrapped_env)
         self._lamb = lamb
+        self.config.update({"start_case_index":  self.config['start_seed']})
 
     def set_lambda(self, lamb):
         self._lamb = lamb

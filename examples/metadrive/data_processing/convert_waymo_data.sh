@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 1. collect pkl env data from waymo raw data
-python examples/metadrive/data_processing/waymo_utils.py --tfrecord_dir ~/src/data/metadrive/tfrecord_9/  --pkl_dir ~/src/data/metadrive/pkl_9/ 
+# python examples/metadrive/data_processing/waymo_utils.py --tfrecord_dir ~/src/data/metadrive/tfrecord_9/  --pkl_dir ~/src/data/metadrive/pkl_9/ 
 
 # 2. run pkl files in waymo env to collect RL data into a big pkl in feed in Decision Transformer
 # ---------------------

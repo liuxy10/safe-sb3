@@ -83,14 +83,14 @@ def visualize_h5py(args):
             plt.show()
 
 def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
-    
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
+    
     o = env.reset(force_seed=seed)
     
     #recorded ts, position, velocity, acc, heading from waymo
     ts, pos_rec, vel_rec, acc_rec, heading_rec, heading_rate_rec = get_current_ego_trajectory_old(env,seed)
     speed_rec = np.linalg.norm(vel_rec, axis = 1)
-    print(np.array(env.engine.agent_manager.active_agents['default_agent'].speed), speed_rec[0])
+    # print(np.array(env.engine.agent_manager.active_agents['default_agent'].speed), speed_rec[0])
 
     
     pos_pred = np.zeros_like(pos_rec)
@@ -112,7 +112,7 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
         cum_rew += r
         
         cum_cost += info['cost']
-        print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
+        # print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
         
 
     plot_comparison = True
@@ -139,6 +139,8 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
         axs[1,1].set_ylabel('reward')
         # plt.title("recorded action vs test predicted action")
         if len(savefig_dir) > 0:
+            if not os.path.isdir(savefig_dir):
+                os.makedirs(savefig_dir)
             plt.savefig(os.path.join(savefig_dir, "seed_"+str(seed)+".jpg"))
         else:
             plt.show()

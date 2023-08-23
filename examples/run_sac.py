@@ -5,7 +5,6 @@ import bullet_safety_gym
 from wrappers import AddCostToRewardEnv
 import h5py
 import numpy as np
-import tqdm
 import os
 from datetime import datetime
 

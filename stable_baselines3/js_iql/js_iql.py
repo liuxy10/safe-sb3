@@ -138,8 +138,9 @@ class JumpStartIQL(IQL):
             and scaled action that will be stored in the replay buffer.
             The two differs when the action space is not normalized (bounds are not [-1, 1]).
         """
+        print("[js_iql] !!!!!!!!!!!!!!!!!!!!!!!! it goes here !!!!!!!!!!!!!")
         # Select action randomly or according to policy
-        self.hist_ac = np.concatenate(
+        self.hist_ac  = np.concatenate(
             [self.hist_ac, np.zeros((1, self.ac_dim))], axis=0
         )
         self.hist_re = np.concatenate([self.hist_re, np.zeros(1)])
@@ -148,6 +149,7 @@ class JumpStartIQL(IQL):
             unscaled_action = np.array([self.action_space.sample() for _ in range(n_envs)])
         else:
             guide_prob = self.get_guide_probability()
+            print("[js_iql] guide_prob", guide_prob)
             use_guide = np.random.choice([False, True], p=[1-guide_prob, guide_prob])
             if use_guide:
                 if self.use_transformer_expert:
@@ -260,6 +262,7 @@ class JumpStartIQL(IQL):
                 self.actor.reset_noise(env.num_envs)
 
             # Select action randomly or according to policy
+            # import pdb; pdb.set_trace()
             actions, buffer_actions = self._sample_action(learning_starts, action_noise, env.num_envs)
             # Rescale and perform action
             new_obs, rewards, dones, infos = env.step(actions)

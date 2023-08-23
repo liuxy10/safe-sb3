@@ -4,7 +4,7 @@ import numpy as np
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from collect_h5py_from_pkl import get_current_ego_trajectory_old
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
-from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed, get_rate_from_heading
+
 
 import tqdm
 import pickle
@@ -15,9 +15,9 @@ import re
 
 import sys
 import sys
-sys.path.append("examples/metadrive/training")
-from utils import AddCostToRewardEnv
-from utils import estimate_action
+sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/training")
+from utils import AddCostToRewardEnv, get_acc_from_vel, get_local_from_heading, get_acc_from_speed, get_rate_from_heading
+
 WAYMO_SAMPLING_FREQ = 10
 TOTAL_TIMESTAMP = 90
 
@@ -138,7 +138,9 @@ def collect_rollout_in_one_seed(env, seed):
             "actions": ac_rec[:N-1], 
             "rewards": re_rec[:N-1], 
             "dones":terminal_rec[:N-1],
+            "costs":cost_rec[:N-1],
             "seed": seed
+            
         }
     return data 
 
@@ -213,11 +215,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args = vars(args)
 
-    # main(args)
+    main(args)
 
     
-    dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10'
-    h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py'
-    pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
+    # dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10'
+    # h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py'
+    # pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
 
 

@@ -4,7 +4,6 @@ import numpy as np
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy
 from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 # from metadrive.utils.coordinates_shift import waymo_2_metadrive_heading, waymo_2_metadrive_position
-from utils import get_acc_from_vel, get_local_from_heading, get_acc_from_speed, get_rate_from_heading
 
 import tqdm
 import h5py
@@ -13,8 +12,8 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.append("examples/metadrive/training")
-from utils import AddCostToRewardEnv
-from utils import estimate_action
+from utils import AddCostToRewardEnv, get_acc_from_vel, get_local_from_heading, get_acc_from_speed, get_rate_from_heading
+
 
 
 WAYMO_SAMPLING_FREQ = 10

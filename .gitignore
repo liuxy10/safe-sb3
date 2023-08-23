@@ -51,6 +51,7 @@ src
 .cache
 *.lprof
 *.prof
+*.jpg
 
 MUJOCO_LOG.TXT
 

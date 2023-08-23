@@ -91,7 +91,7 @@ def load_transformer(model_dir, device):
     state_dim = config['state_dim']['value']
     act_dim = config['act_dim']['value']
     max_ep_len = config['max_ep_len']['value']
-    print("[js_sac] max_ep_len, config['K']['value']", max_ep_len, config['K']['value'])
+    # print("[js_sac] max_ep_len, config['K']['value']", max_ep_len, config['K']['value'])
     model = DecisionTransformer(
         state_dim=state_dim,
         act_dim=act_dim,
