@@ -414,11 +414,11 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             self.logger.record("rollout/ep_rew_mean", rew_mean)
             self.logger.record("rollout/ep_len_mean", safe_mean([ep_info["l"] for ep_info in self.ep_info_buffer]))
             if rew_mean > self.max_epi_rew:
-                self.save(os.path.join(self.logger.dir, "best_model.pt"))
+                self.save(os.path.join(self.logger.dir, "model.pt"))
                 self.max_epi_rew = rew_mean
             # if self.num_timesteps % self.num_steps_per_save == 0:
-            if True:
-                self.save(os.path.join(self.logger.dir, "model.pt"))
+            # if True:
+            #     self.save(os.path.join(self.logger.dir, "model.pt"))
             if self.ep_info_buffer[0].get("c") is not None:
                 cost_mean = safe_mean([ep_info["c"] for ep_info in self.ep_info_buffer])
                 self.logger.record("rollout/ep_cost_mean", cost_mean)

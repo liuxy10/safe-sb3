@@ -122,18 +122,32 @@ def main(args):
                         reset_num_timesteps=False)
             model_dir = model.logger.dir
             last_timestep = model.num_timesteps
+            del model
 
         else:
-
+            model = JumpStartIQL(
+                "MlpPolicy",
+                expert_policy,
+                env,
+                use_transformer_expert=use_transformer_expert,
+                target_return=target_return,
+                reward_scale=reward_scale,
+                obs_mean=obs_mean,
+                obs_std=obs_std,
+                tensorboard_log=tensorboard_log,
+                verbose=1,
+                device=device,
+             )
             model.set_parameters(os.path.join(model_dir, 'model.pt'))
             model.num_timesteps = last_timestep + 1
             model.learn(total_timesteps=step_per_chunk, 
                         reset_num_timesteps=False)
             
             last_timestep = model.num_timesteps
+            del model
 
     
-    del model
+    
     env.close()
 
 
