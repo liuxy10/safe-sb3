@@ -43,6 +43,7 @@ def main(args):
         "manual_control": False,
         "no_traffic": False,
         "agent_policy":PMKinematicsEgoPolicy,
+        "start_seed": 0,
         "waymo_data_directory":args['pkl_dir'],
         "case_num": num_scenarios,
         "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
@@ -82,7 +83,7 @@ def main(args):
 
         ## TODO: delete this when updated model is loaded :
         if reward_scale == None:
-            reward_scale, target_return = 100, 500
+            reward_scale, target_return = 100, 400
     
 
     
@@ -106,13 +107,32 @@ def main(args):
         verbose=1,
         device=device,
     )
-    if args["restart_from_iql_model"] != "":
+    
+    total_timesteps=args["steps"]
+    num_chunks = args["num_chunks"]
+    step_per_chunk = total_timesteps/num_chunks
+    last_timestep = 0
+    for i in range(num_chunks):
+        
         print("-"*100)
-        print("restarting from "+ args["restart_from_iql_model"] + " for further "+str(args["steps"]) + " steps" )
-        model_dir = args["restart_from_iql_model"]
-        model.set_parameters(model_dir)
-    model.learn(total_timesteps=args["steps"])
+        print(f"restarting from {i+1} / {num_chunks}, timestep {last_timestep}" )
+        
+        if i == 0:
+            model.learn(total_timesteps=step_per_chunk, 
+                        reset_num_timesteps=False)
+            model_dir = model.logger.dir
+            last_timestep = model.num_timesteps
 
+        else:
+
+            model.set_parameters(os.path.join(model_dir, 'model.pt'))
+            model.num_timesteps = last_timestep + 1
+            model.learn(total_timesteps=step_per_chunk, 
+                        reset_num_timesteps=False)
+            
+            last_timestep = model.num_timesteps
+
+    
     del model
     env.close()
 
@@ -123,18 +143,18 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9')
-    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/dt-JSiql-diff-peak-10000.pt')
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cuda")
-    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230816_194555-1q61e1d2')
-    parser.add_argument('--use_transformer_expert',  type=bool, default=False)
+    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230822_180622-20swd1g8/')
+    parser.add_argument('--use_transformer_expert',  type=bool, default=True)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--num_of_scenarios', type=str, default="100")
-    parser.add_argument('--steps', '-st', type=int, default=int(1e6))
+    parser.add_argument('--num_of_scenarios', type=int, default=100)# 10
+
+    parser.add_argument('--steps', '-st', type=int, default=int(1e5)) #1e6
+    parser.add_argument('--num_chunks', type=int, default=500)
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
-    parser.add_argument('--restart_from_iql_model', '-re', type=str, default="")
     args = parser.parse_args()
     args = vars(args)
 

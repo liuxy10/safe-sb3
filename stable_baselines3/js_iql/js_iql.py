@@ -115,7 +115,9 @@ class JumpStartIQL(IQL):
             self.obs_std = th.from_numpy(obs_std).to(device=device)
         self.target_return_init = target_return
         self.reward_scale = reward_scale
-        
+        self.num_steps_per_save = 100
+
+
 
     def _sample_action(
         self,
@@ -138,7 +140,7 @@ class JumpStartIQL(IQL):
             and scaled action that will be stored in the replay buffer.
             The two differs when the action space is not normalized (bounds are not [-1, 1]).
         """
-        print("[js_iql] !!!!!!!!!!!!!!!!!!!!!!!! it goes here !!!!!!!!!!!!!")
+        
         # Select action randomly or according to policy
         self.hist_ac  = np.concatenate(
             [self.hist_ac, np.zeros((1, self.ac_dim))], axis=0
@@ -149,7 +151,7 @@ class JumpStartIQL(IQL):
             unscaled_action = np.array([self.action_space.sample() for _ in range(n_envs)])
         else:
             guide_prob = self.get_guide_probability()
-            print("[js_iql] guide_prob", guide_prob)
+            print("num_timesteps, guide_prob = ", self.num_timesteps, guide_prob)
             use_guide = np.random.choice([False, True], p=[1-guide_prob, guide_prob])
             if use_guide:
                 if self.use_transformer_expert:
@@ -271,7 +273,7 @@ class JumpStartIQL(IQL):
             assert len(self.hist_obs.shape) == 2
             self.hist_re[-1] = rewards
             # TODO: delete this when updated env 
-            self.target_return = np.array([[500]])
+            self.target_return = np.array([[400]])
             ##############################
             pred_return = self.target_return[0,-1] - (rewards/self.reward_scale) # question: what is prediction return?
             # import pdb; pdb.set_trace() # 

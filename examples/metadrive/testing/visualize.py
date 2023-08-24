@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # what about the data from h5py
 import h5py
 import sys
-sys.path.append("examples/metadrive/data_processing")
+sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/data_processing")
 from combine_pkls_for_dt import collect_rollout_in_one_seed
 
 # import asciiplotlib as apl
