@@ -91,7 +91,26 @@ def main(args):
             model_dir=args['expert_model_dir'], env=env, device=device
         )
 
-    model = JumpStartIQL(
+
+
+    num_chunks = 50
+    step_per_chunk = 2e4
+    print("step_per_chunk = ", step_per_chunk)
+    last_timestep = 0
+    env_config = env.config
+    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
+    params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/params.npy"
+    # for i in range(num_chunks):
+
+    # print("-"*100)
+    # print(
+    #     f"restarting from timestep {last_timestep}")
+
+    #     if i == 0:
+
+    if args['first_round']:
+
+        model = JumpStartIQL(
         "MlpPolicy",
         env,
         expert_policy,
@@ -102,87 +121,59 @@ def main(args):
         obs_std=obs_std,
         tensorboard_log=tensorboard_log,
         verbose=1,
-        device=device,
-    )
+        device=device,)
+        model.learn(total_timesteps=step_per_chunk,
+                    reset_num_timesteps=False)
+        model_dir = model.logger.dir
+        last_timestep = model.num_timesteps
+        model.save_replay_buffer(buffer_path)
+        np.save(params_path,last_timestep)
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
+        model.save()
+        del model
+        env.close()
+        del env
 
-    total_timesteps = args["steps"]
-    num_chunks = args["num_chunks"]
-    # num_chunks = 1
-    step_per_chunk = total_timesteps/num_chunks
-    print("step_per_chunk = ", step_per_chunk)
-    last_timestep = 0
-    env_config = env.config
-    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
+    else:
+        env = AddCostToRewardEnv(env_config)
 
-    for i in range(num_chunks):
+        model = JumpStartIQL.load(os.path.join(model_dir, 'last_model.pt'),
+                    env, 
+                    print_system_info= True,
+                    device=device,
+                    kwargs= {
+                        "expert_policy": expert_policy,
+                        "use_transformer_expert" : use_transformer_expert,
+                        "target_return":target_return,
+                        "reward_scale":reward_scale,
+                        "obs_mean":obs_mean,
+                        "obs_std":obs_std,
+                        "tensorboard_log":tensorboard_log,
+                        "verbose":1,
+                    },
+                    # force_reset= False
+                )
+        model.num_timesteps = last_timestep + 1
 
-        print("-"*100)
-        print(
-            f"restarting from {i+1} / {num_chunks}, timestep {last_timestep}")
+        # TODO: laod replay buffer
+        model.load_replay_buffer(buffer_path)
+        last_timestep = np.load(params_path)
+        model.learn(total_timesteps=step_per_chunk,
+                    reset_num_timesteps=False)
 
-        if i == 0:
-            model.learn(total_timesteps=step_per_chunk,
-                        reset_num_timesteps=False)
-            model_dir = model.logger.dir
-            last_timestep = model.num_timesteps
-            model.save_replay_buffer(buffer_path)
-            model.save(os.path.join(model.logger.dir, "last_model.pt"))
-            del model
-            env.close()
-            del env
-
-        else:
-            env = AddCostToRewardEnv(env_config)
-            # model = JumpStartIQL(
-            #     "MlpPolicy",
-            #     env,
-            #     expert_policy,
-            #     use_transformer_expert,
-            #     target_return=target_return,
-            #     reward_scale=reward_scale,
-            #     obs_mean=obs_mean,
-            #     obs_std=obs_std,
-            #     tensorboard_log=tensorboard_log,
-            #     verbose=1,
-            # )
-
-            model = JumpStartIQL.load(os.path.join(model_dir, 'last_model.pt'),
-                        env, 
-                        print_system_info= True,
-                        device=device,
-                        kwargs= {
-                            "expert_policy": expert_policy,
-                            "use_transformer_expert" : use_transformer_expert,
-                            "target_return":target_return,
-                            "reward_scale":reward_scale,
-                            "obs_mean":obs_mean,
-                            "obs_std":obs_std,
-                            "tensorboard_log":tensorboard_log,
-                            "verbose":1,
-                        },
-                        # force_reset= False
-                    )
-            model.num_timesteps = last_timestep + 1
-
-            # TODO: laod replay buffer
-            model.load_replay_buffer(buffer_path)
-
-            model.learn(total_timesteps=step_per_chunk,
-                        reset_num_timesteps=False)
-
-            model.save_replay_buffer(buffer_path)
-            model.save(os.path.join(model.logger.dir, "last_model.pt"))
-            last_timestep = model.num_timesteps
-
-            del model
-            env.close()
-            del env
+        model.save_replay_buffer(buffer_path)
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
+        last_timestep = model.num_timesteps
+        np.save(params_path,last_timestep)
+        del model
+        env.close()
+        del env
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--first_round', '-es', type=bool, default=True)
+    parser.add_argument('--first_round', type=bool, default=True)
     parser.add_argument('--pkl_dir', '-pkl', type=str,
                         default='/home/xinyi/src/data/metadrive/pkl_9')
     parser.add_argument('--use_diff_action_space',
