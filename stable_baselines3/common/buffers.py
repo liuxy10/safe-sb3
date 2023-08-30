@@ -199,7 +199,7 @@ class ReplayBuffer(BaseBuffer):
             )
         self.optimize_memory_usage = optimize_memory_usage
 
-        self.observations = np.zeros((self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float32)
+        self.observations = np.zeros((self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float32) #
 
         if optimize_memory_usage:
             # `observations` contains also the next observation
@@ -207,15 +207,15 @@ class ReplayBuffer(BaseBuffer):
         else:
             self.next_observations = np.zeros((self.buffer_size, self.n_envs, *self.obs_shape), dtype=np.float32)
 
-        self.actions = np.zeros((self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32)
+        self.actions = np.zeros((self.buffer_size, self.n_envs, self.action_dim), dtype=np.float32) #
 
-        self.rewards = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
-        self.costs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
-        self.dones = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.rewards = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32) #
+        self.costs = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32) #
+        self.dones = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32) #
         # Handle timeouts termination properly if needed
         # see https://github.com/DLR-RM/stable-baselines3/issues/284
         self.handle_timeout_termination = handle_timeout_termination
-        self.timeouts = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32)
+        self.timeouts = np.zeros((self.buffer_size, self.n_envs), dtype=np.float32) #
 
         if psutil is not None:
             total_memory_usage = self.observations.nbytes + self.actions.nbytes + self.rewards.nbytes + self.dones.nbytes + self.costs.nbytes

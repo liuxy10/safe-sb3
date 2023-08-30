@@ -17,7 +17,6 @@ from stable_baselines3 import JumpStartIQL
 from stable_baselines3.js_sac import utils as js_utils
 
 
-
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
 WAYMO_SAMPLING_FREQ = 10
@@ -27,9 +26,9 @@ def main(args):
     device = args["device"]
     lamb = args["lambda"]
     use_transformer_expert = args["use_transformer_expert"]
-    
-    print("use_transformer_expert",use_transformer_expert)
-    
+
+    print("use_transformer_expert", use_transformer_expert)
+
     # import pdb; pdb.set_trace()
 
     file_list = os.listdir(args['pkl_dir'])
@@ -39,23 +38,24 @@ def main(args):
         num_scenarios = int(args['num_of_scenarios'])
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
-    {
-        "manual_control": False,
-        "no_traffic": False,
-        "agent_policy":PMKinematicsEgoPolicy,
-        "start_seed": 0,
-        "waymo_data_directory":args['pkl_dir'],
-        "case_num": num_scenarios,
-        "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": False,
-        "horizon": 90/5,
-        "reactive_traffic": False,
-                 "vehicle_config": dict(
-               # no_wheel_friction=True,
-               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
-               lane_line_detector=dict(num_lasers=12, distance=50), # 12
-               side_detector=dict(num_lasers=20, distance=50)) # 160,
-    }, lamb= lamb
+        {
+            "manual_control": False,
+            "no_traffic": False,
+            "agent_policy": PMKinematicsEgoPolicy,
+            "start_seed": 0,
+            "waymo_data_directory": args['pkl_dir'],
+            "case_num": num_scenarios,
+            # have to be specified each time we use waymo environment for training purpose
+            "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ,
+            "use_render": False,
+            "horizon": 90/5,
+            "reactive_traffic": False,
+            "vehicle_config": dict(
+                # no_wheel_friction=True,
+                lidar=dict(num_lasers=80, distance=50, num_others=4),  # 120
+                lane_line_detector=dict(num_lasers=12, distance=50),  # 12
+                side_detector=dict(num_lasers=20, distance=50))  # 160,
+        }, lamb=lamb
     )
     env.seed(args["env_seed"])
     if args["random"]:
@@ -81,12 +81,9 @@ def main(args):
             model_dir=args['expert_model_dir'], device=device
         )
 
-        ## TODO: delete this when updated model is loaded :
+        # TODO: delete this when updated model is loaded :
         if reward_scale == None:
             reward_scale, target_return = 100, 400
-    
-
-    
 
     else:
         obs_mean, obs_std = None, None
@@ -96,8 +93,8 @@ def main(args):
 
     model = JumpStartIQL(
         "MlpPolicy",
-        expert_policy,
         env,
+        expert_policy,
         use_transformer_expert=use_transformer_expert,
         target_return=target_return,
         reward_scale=reward_scale,
@@ -107,71 +104,103 @@ def main(args):
         verbose=1,
         device=device,
     )
-    
-    total_timesteps=args["steps"]
+
+    total_timesteps = args["steps"]
     num_chunks = args["num_chunks"]
+    # num_chunks = 1
     step_per_chunk = total_timesteps/num_chunks
+    print("step_per_chunk = ", step_per_chunk)
     last_timestep = 0
+    env_config = env.config
+    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
+
     for i in range(num_chunks):
-        
+
         print("-"*100)
-        print(f"restarting from {i+1} / {num_chunks}, timestep {last_timestep}" )
-        
+        print(
+            f"restarting from {i+1} / {num_chunks}, timestep {last_timestep}")
+
         if i == 0:
-            model.learn(total_timesteps=step_per_chunk, 
+            model.learn(total_timesteps=step_per_chunk,
                         reset_num_timesteps=False)
             model_dir = model.logger.dir
             last_timestep = model.num_timesteps
+            model.save_replay_buffer(buffer_path)
+            model.save(os.path.join(model.logger.dir, "last_model.pt"))
             del model
+            env.close()
+            del env
 
         else:
-            model = JumpStartIQL(
-                "MlpPolicy",
-                expert_policy,
-                env,
-                use_transformer_expert=use_transformer_expert,
-                target_return=target_return,
-                reward_scale=reward_scale,
-                obs_mean=obs_mean,
-                obs_std=obs_std,
-                tensorboard_log=tensorboard_log,
-                verbose=1,
-                device=device,
-             )
-            model.set_parameters(os.path.join(model_dir, 'model.pt'))
+            env = AddCostToRewardEnv(env_config)
+            # model = JumpStartIQL(
+            #     "MlpPolicy",
+            #     env,
+            #     expert_policy,
+            #     use_transformer_expert,
+            #     target_return=target_return,
+            #     reward_scale=reward_scale,
+            #     obs_mean=obs_mean,
+            #     obs_std=obs_std,
+            #     tensorboard_log=tensorboard_log,
+            #     verbose=1,
+            # )
+
+            model = JumpStartIQL.load(os.path.join(model_dir, 'last_model.pt'),
+                        env, 
+                        print_system_info= True,
+                        device=device,
+                        kwargs= {
+                            "expert_policy": expert_policy,
+                            "use_transformer_expert" : use_transformer_expert,
+                            "target_return":target_return,
+                            "reward_scale":reward_scale,
+                            "obs_mean":obs_mean,
+                            "obs_std":obs_std,
+                            "tensorboard_log":tensorboard_log,
+                            "verbose":1,
+                        },
+                        # force_reset= False
+                    )
             model.num_timesteps = last_timestep + 1
-            model.learn(total_timesteps=step_per_chunk, 
+
+            # TODO: laod replay buffer
+            model.load_replay_buffer(buffer_path)
+
+            model.learn(total_timesteps=step_per_chunk,
                         reset_num_timesteps=False)
-            
+
+            model.save_replay_buffer(buffer_path)
+            model.save(os.path.join(model.logger.dir, "last_model.pt"))
             last_timestep = model.num_timesteps
+
             del model
-
-    
-    
-    env.close()
-
-
+            env.close()
+            del env
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9')
-    parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
+    parser.add_argument('--first_round', '-es', type=bool, default=True)
+    parser.add_argument('--pkl_dir', '-pkl', type=str,
+                        default='/home/xinyi/src/data/metadrive/pkl_9')
+    parser.add_argument('--use_diff_action_space',
+                        '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
-    parser.add_argument('--device', '-d', type=str, default="cuda")
-    parser.add_argument('--expert_model_dir', '-emd', type=str, default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230822_180622-20swd1g8/')
+    parser.add_argument('--device', '-d', type=str, default="cpu")
+    parser.add_argument('--expert_model_dir', '-emd', type=str,
+                        default='/home/xinyi/src/decision-transformer/wandb/run-20230825_223522-23a3lhoj')
     parser.add_argument('--use_transformer_expert',  type=bool, default=True)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--num_of_scenarios', type=int, default=100)# 10
+    parser.add_argument('--num_of_scenarios', type=int, default=1e4)  # 1e4
 
-    parser.add_argument('--steps', '-st', type=int, default=int(1e5)) #1e6
-    parser.add_argument('--num_chunks', type=int, default=500)
+    parser.add_argument('--steps', '-st', type=int, default=int(1e6))  # 1e6
+    # 1e6 = 50 chunks* 20000 num_step per chunk
+    parser.add_argument('--num_chunks', type=int, default=50)
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
     args = parser.parse_args()
     args = vars(args)
-
-
 
     main(args)

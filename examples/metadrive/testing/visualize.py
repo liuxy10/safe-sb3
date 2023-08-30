@@ -9,12 +9,14 @@ from metadrive.policy.env_input_policy import EnvInputHeadingAccPolicy
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 from stable_baselines3 import BC, PPO, SAC
 from stable_baselines3.common.evaluation import evaluate_policy
-from utils import AddCostToRewardEnv
+
 import matplotlib.pyplot as plt
 # what about the data from h5py
 import h5py
 import sys
 sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/data_processing")
+sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/training")
+from utils import AddCostToRewardEnv
 from combine_pkls_for_dt import collect_rollout_in_one_seed
 
 # import asciiplotlib as apl
@@ -64,22 +66,16 @@ def visualize_h5py(args):
 
     plot_hist_candidate_actions = True
     if plot_hist_candidate_actions:
-        plot_using_terminal = False
         dataset_names = ['headings', 'heading_rates','speeds','accelerations']
-        if plot_using_terminal: 
-            for i, data_name in enumerate(dataset_names):
-                data = hf[data_name]
-                plot_histogram(data, data_name)
-
-        else:
-            fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-            for i, ax in enumerate(axes.flatten()):
-                data_name = dataset_names[i]
-                data = np.array(hf[data_name])
-                ax.hist(data, bins=50, density = True, log=True)
-                ax.set_title(data_name)
-                ax.set_xlabel('Value')
-                ax.set_ylabel('Frequency')
+        
+        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        for i, ax in enumerate(axes.flatten()):
+            data_name = dataset_names[i]
+            data = np.array(hf[data_name])
+            ax.hist(data, bins=50, density = True, log=True)
+            ax.set_title(data_name)
+            ax.set_xlabel('Value')
+            ax.set_ylabel('Frequency')
             plt.show()
 
 def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
@@ -102,7 +98,8 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
 
     cum_rew, cum_cost = 0,0
     for i in range(len(ts)):
-        action, _ = model.predict(o, deterministic = True)
+        # action, _ = model.predict(o, deterministic = True)
+        action = [0, 4]
         o, r, d, info = env.step(action)
         actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
         actual_speed[i] = np.array(env.engine.agent_manager.active_agents['default_agent'].speed/3.6)
@@ -299,5 +296,29 @@ if __name__ == '__main__':
     # visualize_bc_prediction(args)
     # visualize_h5py(args)
     
-    ill_seeds = np.load("ill_seed.npy")
-    show_negative_reward_scenarios(args, ill_seeds)
+    # ill_seeds = np.load("ill_seed.npy")
+    # show_negative_reward_scenarios(args, ill_seeds)
+
+
+
+    test_env = AddCostToRewardEnv(
+        {
+            "manual_control": False,
+            "no_traffic": False,
+            "agent_policy":PMKinematicsEgoPolicy,
+            "waymo_data_directory":'/home/xinyi/src/data/metadrive/pkl_9',
+            "case_num": 100,
+            "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
+            "use_render": False,
+            'start_seed': 10000,
+            "horizon": 90/5,
+            "reactive_traffic": False,
+                    "vehicle_config": dict(
+                # no_wheel_friction=True,
+                lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
+                lane_line_detector=dict(num_lasers=12, distance=50), # 12
+                side_detector=dict(num_lasers=20, distance=50)) # 160,
+        },    
+    )
+    for seed in [10040, 10049]:
+        plot_waymo_vs_pred(test_env, None, seed, 'increase speed', '/home/xinyi/src/safe-sb3/examples/metadrive/figs/test')

@@ -206,11 +206,11 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     # parser.add_argument('--pkl_dir', type=str, default='/home/vision/src/data/metadrive/pkl_9/')
-    parser.add_argument('--pkl_dir', type=str, default='examples/metadrive/pkl_9/')
-    parser.add_argument('--start_seed', type=int, required=True)
-    parser.add_argument('--dt_data_path', type=str, default='examples/metadrive/dt_pkl/test.pkl')
-    parser.add_argument('--num_of_scenarios', type=str, default='2000')
-    parser.add_argument('--lamb', type=float, default=10.)
+    parser.add_argument('--pkl_dir', type=str, default='~/src/data/metadrive/pkl_9/')
+    parser.add_argument('--start_seed', type=int, default='0')
+    parser.add_argument('--dt_data_path', type=str, default='~/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10/eps_0.pkl')
+    parser.add_argument('--num_of_scenarios', type=str, default='1000')
+    parser.add_argument('--lamb', type=float, default=1.)
     # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()
     args = vars(args)
@@ -221,5 +221,4 @@ if __name__ == "__main__":
     # dt_pkl_dir = '/home/xinyi/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10'
     # h5py_path = '/home/xinyi/src/data/metadrive/h5py/waymo_n_10000_lam_1.h5py'
     # pkls_to_h5py_for_bc(dt_pkl_dir, h5py_path)
-
 

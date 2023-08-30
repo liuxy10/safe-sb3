@@ -12,7 +12,7 @@ n_per_eps=1000
 # make a folder to store waymo tfrecord dataset
 mkdir -p ~/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10/
 # Define a function to run the Python file in the loop
-combine_pkls() {
+record_scenes() {
     local eps="$1"
     start_seed=$(($eps*$n_per_eps))
     echo "-------------- start_seed = $start_seed -------------"
@@ -25,7 +25,7 @@ for ((i=0; i<total_eps; i++)); do
     echo "Iteration $i"
 
     # Use parallel to run three instances of the function in parallel
-    combine_pkls $i
+    record_scenes $i
 
     echo "Iteration $i completed"
 done
