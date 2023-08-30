@@ -94,19 +94,13 @@ def main(args):
 
 
     num_chunks = 50
-    step_per_chunk = 2e4
-    print("step_per_chunk = ", step_per_chunk)
+    step_per_chunk = 2e4 #2e4
+    print("step_per_chunk, first round = ", step_per_chunk, args['first_round'])
     last_timestep = 0
     env_config = env.config
     buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
     params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/params.npy"
-    # for i in range(num_chunks):
-
-    # print("-"*100)
-    # print(
-    #     f"restarting from timestep {last_timestep}")
-
-    #     if i == 0:
+    model_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0"
 
     if args['first_round']:
 
@@ -124,12 +118,12 @@ def main(args):
         device=device,)
         model.learn(total_timesteps=step_per_chunk,
                     reset_num_timesteps=False)
-        model_dir = model.logger.dir
+        
         last_timestep = model.num_timesteps
         model.save_replay_buffer(buffer_path)
         np.save(params_path,last_timestep)
         model.save(os.path.join(model.logger.dir, "last_model.pt"))
-        model.save()
+    
         del model
         env.close()
         del env
@@ -153,14 +147,15 @@ def main(args):
                     },
                     # force_reset= False
                 )
-        model.num_timesteps = last_timestep + 1
-
+        
         # TODO: laod replay buffer
         model.load_replay_buffer(buffer_path)
         last_timestep = np.load(params_path)
+        model.num_timesteps = last_timestep + 1
+
         model.learn(total_timesteps=step_per_chunk,
                     reset_num_timesteps=False)
-
+     
         model.save_replay_buffer(buffer_path)
         model.save(os.path.join(model.logger.dir, "last_model.pt"))
         last_timestep = model.num_timesteps
@@ -173,7 +168,7 @@ def main(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--first_round', type=bool, default=True)
+    parser.add_argument('--first_round','-f', action="store_true")
     parser.add_argument('--pkl_dir', '-pkl', type=str,
                         default='/home/xinyi/src/data/metadrive/pkl_9')
     parser.add_argument('--use_diff_action_space',
@@ -186,12 +181,11 @@ if __name__ == "__main__":
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=int, default=1e4)  # 1e4
 
-    parser.add_argument('--steps', '-st', type=int, default=int(1e6))  # 1e6
+    # parser.add_argument('--steps', '-st', type=int, default=int(1e6))  # 1e6
     # 1e6 = 50 chunks* 20000 num_step per chunk
     parser.add_argument('--num_chunks', type=int, default=50)
     parser.add_argument('--random', '-r', action='store_true', default=False)
     parser.add_argument('--suffix', type=str)
     args = parser.parse_args()
     args = vars(args)
-
     main(args)

@@ -6,9 +6,10 @@ step_per_chunk = total_timesteps/num_chunks
 last_timestep = 0
 
 for (( i=0; i<$num_chunks; i++ )); do
+    echo "------------------------Iteration: $i ------------------------"
     if [ $i -eq 0 ]; then
-        python run_js_iql_waymo.py --first_round True
+        python run_js_iql_waymo.py -f
     else
-        python run_js_iql_waymo.py --first_round False
+        python run_js_iql_waymo.py 
     fi
 done
