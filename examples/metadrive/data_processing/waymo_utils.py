@@ -4,15 +4,15 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 
-from metadrive.engine.asset_loader import AssetLoader
+# from metadrive.engine.asset_loader import AssetLoader
 
 
-import tensorflow as tf
+# import tensorflow as tf
 
-try:
-    from metadrive.utils.waymo_utils.protos import scenario_pb2
-except ImportError:
-    pass
+# try:
+#     from metadrive.utils.waymo_utils.protos import scenario_pb2
+# except ImportError:
+#     pass
 import os
 import pickle
 import numpy as np
@@ -260,16 +260,19 @@ def read_waymo_data(file_path):
     return data
 
 
-def draw_waymo_map(data):
+def draw_waymo_map(data, savefig_path = ""):
     figure(figsize=(8, 6), dpi=500)
     for key, value in data["map"].items():
         if value.get("type", None) == "center_lane":
-            plt.scatter([x[0] for x in value["polyline"]], [y[1] for y in value["polyline"]], s=0.5)
+            plt.scatter([x[0] for x in value["polyline"]], [y[1] for y in value["polyline"]], s=0.5, color = "grey")
         elif value.get("type", None) == "road_edge":
             plt.scatter([x[0] for x in value["polyline"]], [y[1] for y in value["polyline"]], s=0.5, c=(0, 0, 0))
         # elif value.get("type", None) == "road_line":
         #     plt.scatter([x[0] for x in value["polyline"]], [y[1] for y in value["polyline"]], s=0.5, c=(0.8,0.8,0.8))
-    plt.show()
+    # plt.show()
+    if savefig_path != "":
+        print("saving png to", savefig_path)
+        plt.savefig(savefig_path)
 
 
 # return the nearest point's index of the line

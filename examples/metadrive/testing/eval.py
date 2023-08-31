@@ -20,6 +20,9 @@ sys.path.append("examples/metadrive/training")
 from visualize import plot_waymo_vs_pred
 from utils import AddCostToRewardEnv
 
+sys.path.append("/home/xinyi/src/decision-transformer/gym/decision_transformer/evaluation")
+from plot_utils import *
+from 
 
 class GuidePolicyOnly(JumpStartIQL):
     def __init__(
@@ -168,6 +171,8 @@ class GuidePolicyOnly(JumpStartIQL):
 
         return 
 
+
+
 def evaluate_model_under_env(
         training_method, 
         env_test, 
@@ -191,15 +196,15 @@ def evaluate_model_under_env(
         keys = ('expert_policy','use_transformer_expert', 'target_return', 'reward_scale', 'obs_mean', 'obs_std')
         assert all_elements_in_dict_keys(keys, model_config), print('Model missing arguments, check keys') 
         model = training_method(
-        "MlpPolicy",
-        model_config['expert_policy'],
-        env_test,
-        use_transformer_expert = model_config['use_transformer_expert'],
-        target_return=model_config['target_return'],
-        reward_scale=model_config['reward_scale'],
-        obs_mean=model_config['obs_mean'],
-        obs_std=model_config['obs_std'],
-        device='cpu'
+            "MlpPolicy",
+            model_config['expert_policy'],
+            env_test,
+            use_transformer_expert = model_config['use_transformer_expert'],
+            target_return=model_config['target_return'],
+            reward_scale=model_config['reward_scale'],
+            obs_mean=model_config['obs_mean'],
+            obs_std=model_config['obs_std'],
+            device='cpu'
         )
 
         fn = training_method.__name__ +"_dt=" + str(model_config['use_transformer_expert'])
@@ -290,15 +295,15 @@ if __name__ == "__main__":
                side_detector=dict(num_lasers=20, distance=50)) # 160,
     }
     
-    save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/"
+    save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/BC/"
     
     # test BC 
-    # env = AddCostToRewardEnv(config)
-    # evaluate_model_under_env(BC, env, 
-    #     policy_load_dir = 'examples/metadrive/example_policy/bc-diff-peak-10000.pt',
-    #     save_fig_dir = save_fig_dir
-    #     )
-    # env.close()
+    env = AddCostToRewardEnv(config)
+    evaluate_model_under_env(BC, env, 
+        policy_load_dir = 'examples/metadrive/example_policy/bc-diff-peak-10000.pt',
+        save_fig_dir = save_fig_dir
+        )
+    env.close()
     
     # test SAC
     # env = AddCostToRewardEnv(config)
@@ -308,21 +313,21 @@ if __name__ == "__main__":
         # )
     # env.close()
     
-    # test DT guide policy only:
-    env = AddCostToRewardEnv(config)
-    evaluate_guide_policy_only(env, use_transformer_expert = True, 
-        expert_model_dir = "/home/xinyi/src/decision-transformer/gym/wandb/run-20230822_180622-20swd1g8",
-        save_fig_dir = save_fig_dir
-        )
-    env.close()
+    # # test DT guide policy only:
+    # env = AddCostToRewardEnv(config)
+    # evaluate_guide_policy_only(env, use_transformer_expert = True, 
+    #     expert_model_dir = "/home/xinyi/src/decision-transformer/gym/wandb/run-20230822_180622-20swd1g8",
+    #     save_fig_dir = save_fig_dir
+    #     )
+    # env.close()
 
-    # test BC guide policy(redundant but interesting to try, should have the same result as 'test BC')
-    env = AddCostToRewardEnv(config)
-    evaluate_guide_policy_only(env, use_transformer_expert = False, 
-        expert_model_dir = 'examples/metadrive/example_policy/bc-diff-peak-10000.pt',
-        save_fig_dir = save_fig_dir
-        )
-    env.close()
+    # # test BC guide policy(redundant but interesting to try, should have the same result as 'test BC')
+    # env = AddCostToRewardEnv(config)
+    # evaluate_guide_policy_only(env, use_transformer_expert = False, 
+    #     expert_model_dir = 'examples/metadrive/example_policy/bc-diff-peak-10000.pt',
+    #     save_fig_dir = save_fig_dir
+    #     )
+    # env.close()
 
     # test JS-iql, with dt as guide policy 
     # env = AddCostToRewardEnv(config)

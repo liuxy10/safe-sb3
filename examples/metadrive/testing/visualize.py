@@ -98,8 +98,8 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
 
     cum_rew, cum_cost = 0,0
     for i in range(len(ts)):
-        # action, _ = model.predict(o, deterministic = True)
-        action = [0, 4]
+        action, _ = model.predict(o, deterministic = True)
+        # action = [0, 4]
         o, r, d, info = env.step(action)
         actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
         actual_speed[i] = np.array(env.engine.agent_manager.active_agents['default_agent'].speed/3.6)

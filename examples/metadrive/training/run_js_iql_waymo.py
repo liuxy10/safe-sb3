@@ -176,7 +176,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cpu")
     parser.add_argument('--expert_model_dir', '-emd', type=str,
-                        default='/home/xinyi/src/decision-transformer/wandb/run-20230825_223522-23a3lhoj')
+                        default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy') # change back to acc 1
     parser.add_argument('--use_transformer_expert',  type=bool, default=True)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=int, default=1e4)  # 1e4

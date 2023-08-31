@@ -14,7 +14,7 @@ from utils import AddCostToRewardEnv
 from stable_baselines3.common.monitor import Monitor
 import matplotlib.pyplot as plt
 
-from visualize import plot_waymo_vs_pred
+# from visualize import plot_waymo_vs_pred
 
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 
@@ -37,20 +37,23 @@ def main(args):
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
     {
-        "manual_control": False,
-        "no_traffic": False,
-        "agent_policy":ReplayEgoCarPolicy, # BC uses ReplayEgoCarPolicy to train policy
-        "waymo_data_directory":args['pkl_dir'],
-        "case_num": num_scenarios,
-        "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ, # have to be specified each time we use waymo environment for training purpose
-        "use_render": False,
-        "reactive_traffic": False,
-               "vehicle_config": dict(
-               # no_wheel_friction=True,
-               lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
-               lane_line_detector=dict(num_lasers=12, distance=50), # 12
-               side_detector=dict(num_lasers=20, distance=50)) # 160,
-    }, 
+            "manual_control": False,
+            "no_traffic": False,
+            "agent_policy": PMKinematicsEgoPolicy,
+            "start_seed": 0,
+            "waymo_data_directory": args['pkl_dir'],
+            "case_num": num_scenarios,
+            # have to be specified each time we use waymo environment for training purpose
+            "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ,
+            "use_render": False,
+            "horizon": 90/5,
+            "reactive_traffic": False,
+            "vehicle_config": dict(
+                # no_wheel_friction=True,
+                lidar=dict(num_lasers=80, distance=50, num_others=4),  # 120
+                lane_line_detector=dict(num_lasers=12, distance=50),  # 12
+                side_detector=dict(num_lasers=20, distance=50))  # 160,
+        },
     )
    
     env.seed(args["env_seed"])
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # waymo data argument
-    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_900.h5py')
+    parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_1000000.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
