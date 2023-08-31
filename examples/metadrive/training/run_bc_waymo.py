@@ -61,28 +61,63 @@ def main(args):
     exp_name = "bc-waymo-cost-default"
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
+    num_chunks = 50
+    step_per_chunk = 2e4 #2e4
+    print("step_per_chunk, first round = ", step_per_chunk, args['first_round'])
+    last_timestep = 0
+    env_config = env.config
+    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/bc_replay_buffer.pkl"
+    params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/bc_params.npy"
+    model_dir = "/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000"
 
+    if args['first_round']:
 
-    model = BC("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1)
-    # checkpoint_callback = CheckpointCallback(save_freq=args['save_freq'], save_path=args['output_dir'],
-    #                                      name_prefix=exp_name)
-
-    model.learn(
-                args['steps'], 
-                data_dir = args['h5py_path'], 
-                use_diff_action_space = args['use_diff_action_space']
-                )
-
+        model = BC(
+        "MlpPolicy", 
+        env, 
+        tensorboard_log=tensorboard_log,
+        verbose=1
+        )
+        
+        model.learn(total_timesteps=step_per_chunk,
+                    data_dir = args['h5py_path'], 
+                    use_diff_action_space = args['use_diff_action_space'],
+                    reset_num_timesteps=False)
+        last_timestep = model.num_timesteps
+        model.save_replay_buffer(buffer_path)
+        np.save(params_path,last_timestep)
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
     
-    del model
-    env.close()
+        del model
+        env.close()
+        del env
 
+    else:
+        env = AddCostToRewardEnv(env_config)
+        
+        model = BC.load(os.path.join(model_dir, 'last_model.pt'),
+                        env,
+                        print_system_info= True)
+        # TODO: laod replay buffer
+        model.load_replay_buffer(buffer_path)
+        last_timestep = np.load(params_path)
+        model.num_timesteps = last_timestep + 1
+
+        model.learn(total_timesteps=step_per_chunk,
+                    reset_num_timesteps=False)
+     
+        model.save_replay_buffer(buffer_path)
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
+        last_timestep = model.num_timesteps
+        np.save(params_path,last_timestep)
+        del model
+        env.close()
+        del env
 
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
-
-    # waymo data argument
+    parser.add_argument('--first_round','-f', action="store_true")
     parser.add_argument('--h5py_path', '-h5', type=str, default='examples/metadrive/h5py/bc_9_1000000.h5py')
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='examples/metadrive/pkl_9')
     
@@ -90,8 +125,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--num_of_scenarios', type=str, default="100")
     parser.add_argument('--steps', '-st', type=int, default=int(100000))
-    # for test eval purpose
-    parser.add_argument('--policy_load_dir', type=str, default = 'examples/metadrive/example_policy/bc-diff-peak.pt')
+    parser.add_argument('--num_chunks', type=int, default=50)
     args = parser.parse_args()
     args = vars(args)
 

@@ -148,7 +148,6 @@ def main(args):
                     # force_reset= False
                 )
         
-        # TODO: laod replay buffer
         model.load_replay_buffer(buffer_path)
         last_timestep = np.load(params_path)
         model.num_timesteps = last_timestep + 1
