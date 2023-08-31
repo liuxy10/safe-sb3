@@ -86,7 +86,7 @@ def main(args):
             reward_scale, target_return = 100, 400
 
     else:
-        obs_mean, obs_std = None, None
+        obs_mean, obs_std, reward_scale, target_return = None, None, None, None
         expert_policy = js_utils.load_expert_policy(
             model_dir=args['expert_model_dir'], env=env, device=device
         )

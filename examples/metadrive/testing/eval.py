@@ -42,26 +42,14 @@ def evaluate_model_under_env(
 
     elif training_method in (JumpStartIQL, JumpStartSAC):
         # should be able to load all useful info from current env.
-        # keys = ('expert_policy','use_transformer_expert', 'target_return', 'reward_scale', 'obs_mean', 'obs_std')
-        # assert all_elements_in_dict_keys(keys, model_config), print('Model missing arguments, check keys') 
-        # model = training_method(
-        #     "MlpPolicy",
-        #     env_test,
-        #     model_config['expert_policy'],
-        #     use_transformer_expert = model_config['use_transformer_expert'],
-        #     target_return=model_config['target_return'],
-        #     reward_scale=model_config['reward_scale'],
-        #     obs_mean=model_config['obs_mean'],
-        #     obs_std=model_config['obs_std'],
-        #     device='cpu'
-        # )
-        model_dir = model_config['model_dir']
-        model = training_method.load(model_dir, 
+        
+        
+        model = training_method.load(policy_load_dir, 
                             env_test,
+                            device = 'cpu',
                             kwargs= model_config
                             )
 
-        
         fn = training_method.__name__ +"_dt=" + str(model_config['use_transformer_expert'])
         
     
@@ -82,36 +70,6 @@ def evaluate_model_under_env(
         plot_waymo_vs_pred(env_test, model, seed, training_method.__name__, savefig_dir = os.path.join(save_fig_dir, fn))
 
         # print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
-
-
-def evaluate_guide_policy_only(env, use_transformer_expert, expert_model_dir, save_fig_dir):
-    if use_transformer_expert:
-        loaded_stats = js_utils.load_demo_stats(path=expert_model_dir)
-        obs_mean, obs_std, reward_scale, target_return = loaded_stats
-        expert_policy = js_utils.load_transformer(
-            model_dir=expert_model_dir, device='cpu'
-        )
-        ## TODO: delete this when updated model is loaded :
-        reward_scale, target_return = 100, 400
-    
-    else:
-        obs_mean, obs_std = None, None
-        expert_policy = js_utils.load_expert_policy(
-            model_dir=expert_model_dir, env=env, device='cpu'
-        )
-        reward_scale, target_return = None, None
-    
-    model_config = {
-        'expert_policy': expert_policy,
-        'use_transformer_expert':  use_transformer_expert, 
-        'target_return': target_return, 
-        'reward_scale':reward_scale, 
-        'obs_mean': obs_mean, 
-        'obs_std': obs_std, 
-    }
-    evaluate_model_under_env(GuidePolicyOnly, env, model_config = model_config, save_fig_dir = save_fig_dir)
-    
-    env.close()
 
 
 def all_elements_in_dict_keys(elements, dictionary):
@@ -184,34 +142,59 @@ if __name__ == "__main__":
     # env.close()
 
     # test JS-iql, with dt as guide policy 
-    # env = AddCostToRewardEnv(env_config)
-    # evaluate_model_under_env(JumpStartIQL, env, 
-        # policy_load_dir = 'examples/metadrive/example_policy/sac-diff-peak-1000.pt',
-        # save_fig_dir = save_fig_dir
-        # )
-    # env.close()
-
-    # test JS-iql, with bc as guide policy 
     env = AddCostToRewardEnv(env_config)
+    # JS-iql policy 
+    policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
+    # DT policy as expert policy
+    expert_policy_dir = '/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy' # acc bounded 
     
-    expert_policy = js_utils.load_expert_policy('/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt', # BC policy 
-                                                env)
+    expert_policy = js_utils.load_transformer(expert_policy_dir, device='cpu')
+    loaded_stats = js_utils.load_demo_stats(
+            path=expert_policy_dir
+        )
+    obs_mean, obs_std, reward_scale, target_return = loaded_stats
     model_config = {
-            'model_dir': '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt',
             'expert_policy': expert_policy,
-            'use_transformer_expert': False,
-            'target_return': None,
-            'reward_scale':None, 
-            'obs_mean':None, 
-            'obs_std':None,
+            'use_transformer_expert': True,
+            'target_return': target_return,
+            'reward_scale':reward_scale, 
+            'obs_mean':obs_mean, 
+            'obs_std':obs_std,
             'verbose':1,
             'tensorboard_log':''
             }
  
     evaluate_model_under_env(JumpStartIQL, env, 
-        policy_load_dir = 'examples/metadrive/example_policy/sac-diff-peak-1000.pt',
+        policy_load_dir = policy_load_dir,
         save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
         model_config = model_config
         )
     env.close()
+
+    # # test JS-iql, with bc as guide policy 
+    # env = AddCostToRewardEnv(env_config)
+    # # BC policy as expert policy
+    # expert_policy_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt' 
+    # expert_policy = js_utils.load_expert_policy(expert_policy_dir, env)
+    # ####### should be replaced by bc-js-iql model #######
+    # model_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'
+    # #####################################################      
+    # model_config = {
+    #         'model_dir': model_dir,
+    #         'expert_policy': expert_policy,
+    #         'use_transformer_expert': False,
+    #         'target_return': None,
+    #         'reward_scale':None, 
+    #         'obs_mean':None, 
+    #         'obs_std':None,
+    #         'verbose':1,
+    #         'tensorboard_log':''
+    #         }
+ 
+    # evaluate_model_under_env(JumpStartIQL, env, 
+    #     policy_load_dir = '',
+    #     save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+    #     model_config = model_config
+    #     )
+    # env.close()
 
