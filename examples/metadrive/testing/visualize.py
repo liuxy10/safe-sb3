@@ -19,6 +19,10 @@ sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/training")
 from utils import AddCostToRewardEnv
 from combine_pkls_for_dt import collect_rollout_in_one_seed
 
+sys.path.append("/home/xinyi/src/decision-transformer/gym/decision_transformer/evaluation")
+
+from plot_utils import plot_states_compare
+
 # import asciiplotlib as apl
 
 # specification for 
@@ -89,7 +93,7 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
     # print(np.array(env.engine.agent_manager.active_agents['default_agent'].speed), speed_rec[0])
 
     
-    pos_pred = np.zeros_like(pos_rec)
+    actual_pos = np.zeros_like(pos_rec)
     action_pred = np.zeros_like(pos_rec) # default diff action version
     actual_heading = np.zeros_like(ts)
     actual_speed= np.zeros_like(ts)
@@ -100,47 +104,66 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
     for i in range(len(ts)):
         action, _ = model.predict(o, deterministic = True)
         # action = [0, 4]
-        o, r, d, info = env.step(action)
+        o, r, done, info = env.step(action)
         actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
         actual_speed[i] = np.array(env.engine.agent_manager.active_agents['default_agent'].speed/3.6)
-        pos_pred [i,:] = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
+        actual_pos [i,:] = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
         action_pred [i,:] = action
         actual_rew[i] = r
         cum_rew += r
         
         cum_cost += info['cost']
         # print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
-        
+        if done:
+            actual_heading[i+1:] = None
+            actual_speed[i+1:] = None
+            action_pred[i+1:] = None
+            actual_rew[i+1:] = None
+
+            actual_pos[i+1:,:] = None
+
+            break
+
 
     plot_comparison = True
     action_pred = np.array(action_pred)
     if plot_comparison:
-        pos_pred = np.array(pos_pred)
-        fig, axs = plt.subplots(2, 2)
+        plot_states_compare(ts, 
+                   action_pred, acc_rec, 
+                   actual_speed, speed_rec, 
+                   pos_rec, actual_pos, 
+                   actual_heading, heading_rec, 
+                   actual_rew,
+                   save_fig_dir = savefig_dir,
+                   seed=seed, 
+                   succeed = info['arrive_dest'],
+                   md_name = 'BC')
+        # pos_pred = np.array(pos_pred)
+        # fig, axs = plt.subplots(2, 2)
 
-        axs[0,0].plot(ts, action_pred[:,1], label = md_name+' pred acc')
-        axs[0,0].plot(ts, acc_rec, label = 'waymo acc' )
-        axs[1,0].plot(ts, actual_heading, label = md_name+' actual heading' )
-        axs[1,0].plot(ts, heading_rec, label = 'waymo heading')
-        axs[0,1].plot(ts, actual_speed, label = md_name+' actual speed' )
-        axs[0,1].plot(ts, speed_rec, label = 'waymo speed')
-        axs[1,1].plot(ts, actual_rew, label = md_name+' actual reward' )
-        # axs[1,1].plot(ts, rew_rec, label = 'waymo reward')
-        for i in range(2):
-            for j in range(2):
-                axs[i,j].legend()
-                axs[i,j].set_xlabel('time')
-        axs[0,0].set_ylabel('acceleration')
-        axs[1,0].set_ylabel('heading')
-        axs[0,1].set_ylabel('speed')
-        axs[1,1].set_ylabel('reward')
-        # plt.title("recorded action vs test predicted action")
-        if len(savefig_dir) > 0:
-            if not os.path.isdir(savefig_dir):
-                os.makedirs(savefig_dir)
-            plt.savefig(os.path.join(savefig_dir, "seed_"+str(seed)+".jpg"))
-        else:
-            plt.show()
+        # axs[0,0].plot(ts, action_pred[:,1], label = md_name+' pred acc')
+        # axs[0,0].plot(ts, acc_rec, label = 'waymo acc' )
+        # axs[1,0].plot(ts, actual_heading, label = md_name+' actual heading' )
+        # axs[1,0].plot(ts, heading_rec, label = 'waymo heading')
+        # axs[0,1].plot(ts, actual_speed, label = md_name+' actual speed' )
+        # axs[0,1].plot(ts, speed_rec, label = 'waymo speed')
+        # axs[1,1].plot(ts, actual_rew, label = md_name+' actual reward' )
+        # # axs[1,1].plot(ts, rew_rec, label = 'waymo reward')
+        # for i in range(2):
+        #     for j in range(2):
+        #         axs[i,j].legend()
+        #         axs[i,j].set_xlabel('time')
+        # axs[0,0].set_ylabel('acceleration')
+        # axs[1,0].set_ylabel('heading')
+        # axs[0,1].set_ylabel('speed')
+        # axs[1,1].set_ylabel('reward')
+        # # plt.title("recorded action vs test predicted action")
+        # if len(savefig_dir) > 0:
+        #     if not os.path.isdir(savefig_dir):
+        #         os.makedirs(savefig_dir)
+        #     plt.savefig(os.path.join(savefig_dir, "seed_"+str(seed)+".jpg"))
+        # else:
+        #     plt.show()
     return cum_rew, cum_cost
 
 
