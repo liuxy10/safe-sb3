@@ -763,26 +763,26 @@ class BaseAlgorithm(ABC):
 
         # pytype: disable=not-instantiable,wrong-keyword-args
         
-        if cls == JumpStartIQL:
-            model = cls(
-                policy=data["policy_class"],
-                env=env, 
-                expert_policy = kwargs["expert_policy"],
-                use_transformer_expert = kwargs["use_transformer_expert"],
-                target_return= kwargs["target_return"],
-                reward_scale= kwargs ["reward_scale"],
-                obs_mean = kwargs["obs_mean"],
-                obs_std = kwargs["obs_std"],
-                tensorboard_log= kwargs["tensorboard_log"],
-                verbose=1
-            )
-        else:
-            model = cls(
-                policy=data["policy_class"],
-                env=env,
-                device=device,
-                _init_setup_model=False,  # type: ignore[call-arg]
-            )
+        # if cls == JumpStartIQL:
+        #     model = cls(
+        #         policy=data["policy_class"],
+        #         env=env, 
+        #         expert_policy = kwargs["expert_policy"],
+        #         use_transformer_expert = kwargs["use_transformer_expert"],
+        #         target_return= kwargs["target_return"],
+        #         reward_scale= kwargs ["reward_scale"],
+        #         obs_mean = kwargs["obs_mean"],
+        #         obs_std = kwargs["obs_std"],
+        #         tensorboard_log= kwargs["tensorboard_log"],
+        #         verbose=1
+        #     )
+        # else:
+        model = cls(
+            policy=data["policy_class"],
+            env=env,
+            device=device,
+            _init_setup_model=False,  # type: ignore[call-arg]
+        )
 
 
         # pytype: enable=not-instantiable,wrong-keyword-args

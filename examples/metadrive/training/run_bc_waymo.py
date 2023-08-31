@@ -33,6 +33,8 @@ def main(args):
         num_scenarios = len(file_list)
     else:
         num_scenarios = int(args['num_of_scenarios'])
+    # # TODO: delete this when test done
+    # num_scenarios = 100
 
     print("num of scenarios: ", num_scenarios)
     env = AddCostToRewardEnv(
@@ -62,13 +64,13 @@ def main(args):
     root_dir = "tensorboard_log"
     tensorboard_log = os.path.join(root_dir, exp_name)
     num_chunks = 50
-    step_per_chunk = 2e4 #2e4
+    step_per_chunk = 2e4 #TODO: change back to 2e4
     print("step_per_chunk, first round = ", step_per_chunk, args['first_round'])
     last_timestep = 0
     env_config = env.config
-    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/bc_replay_buffer.pkl"
+    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/bc_replay_buffer.h5py"
     params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/bc_params.npy"
-    model_dir = "/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000"
+    model_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0"
 
     if args['first_round']:
 
@@ -98,12 +100,14 @@ def main(args):
         model = BC.load(os.path.join(model_dir, 'last_model.pt'),
                         env,
                         print_system_info= True)
-        # TODO: laod replay buffer
-        model.load_replay_buffer(buffer_path)
+    
+        model.reload_replay_buffer(buffer_path)
         last_timestep = np.load(params_path)
         model.num_timesteps = last_timestep + 1
 
         model.learn(total_timesteps=step_per_chunk,
+                    data_dir = args['h5py_path'], 
+                    use_diff_action_space = args['use_diff_action_space'],
                     reset_num_timesteps=False)
      
         model.save_replay_buffer(buffer_path)

@@ -13,6 +13,8 @@ from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedul
 from stable_baselines3.common.policies import ActorCriticPolicy as BCPolicy
 import h5py
 
+from stable_baselines3.common.save_util import load_from_pkl, save_to_pkl
+
 SelfBC = TypeVar("SelfBC", bound="BC")
 
 
@@ -145,6 +147,22 @@ class BC(OffPolicyAlgorithm):
             progress_bar=progress_bar,
         )
 
+    def reload_replay_buffer (self,
+        path):
+
+        """
+        identical to OffPolicyAlgorithm
+        """
+        self.replay_buffer = load_from_pkl(path, self.verbose)
+        assert isinstance(self.replay_buffer, ReplayBuffer), "The replay buffer must inherit from ReplayBuffer class"
+
+        # Backward compatibility with SB3 < 2.1.0 replay buffer
+        # Keep old behavior: do not handle timeout termination separately
+        if not hasattr(self.replay_buffer, "handle_timeout_termination"):  # pragma: no cover
+            self.replay_buffer.handle_timeout_termination = False
+            self.replay_buffer.timeouts = np.zeros_like(self.replay_buffer.dones)
+    
+    
     def load_replay_buffer(self, data_dir, use_diff_action_space = False) -> None:
         with h5py.File(data_dir, 'r') as f:
             obs = f['observations'][:]
