@@ -86,7 +86,7 @@ def main(args):
             reward_scale, target_return = 100, 400
 
     else:
-        obs_mean, obs_std, reward_scale, target_return = None, None, None, None
+        obs_mean, obs_std, reward_scale, target_return = None, None, 1, None
         expert_policy = js_utils.load_expert_policy(
             model_dir=args['expert_model_dir'], env=env, device=device
         )
@@ -100,7 +100,7 @@ def main(args):
     env_config = env.config
     buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
     params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/params.npy"
-    model_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0"
+    model_dir = f"/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/{experiment_name}/IQL_0"
 
     if args['first_round']:
 
@@ -172,11 +172,14 @@ if __name__ == "__main__":
                         default='/home/xinyi/src/data/metadrive/pkl_9')
     parser.add_argument('--use_diff_action_space',
                         '-diff', type=bool, default=True)
+
+    # parser.add_argument('--use_transformer_expert',  type=bool, default=True)
+    parser.add_argument('--use_transformer_expert', '-dt', action="store_true")
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--device', '-d', type=str, default="cpu")
     parser.add_argument('--expert_model_dir', '-emd', type=str,
                         default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy') # change back to acc 1
-    parser.add_argument('--use_transformer_expert',  type=bool, default=True)
+    
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=int, default=1e4)  # 1e4
 
