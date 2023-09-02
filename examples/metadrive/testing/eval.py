@@ -29,7 +29,8 @@ def evaluate_model_under_env(
         save_fig_dir = "",
         model_config = {}, 
         start_seed = 10000, 
-        episode_len = 90
+        episode_len = 90,
+        end_eps_when_done = True
         ):
 
 
@@ -67,7 +68,12 @@ def evaluate_model_under_env(
     print("mean_success_rate = ", mean_success_rate)
 
     for seed in tqdm.tqdm(range( start_seed,  start_seed + env_test.config['case_num'])):
-        plot_waymo_vs_pred(env_test, model, seed, training_method.__name__, savefig_dir = os.path.join(save_fig_dir, fn))
+        plot_waymo_vs_pred(env_test, 
+                           model, 
+                           seed, 
+                           training_method.__name__, 
+                           savefig_dir = os.path.join(save_fig_dir, fn), 
+                           end_eps_when_done = end_eps_when_done)
 
         # print("mean_reward, std_reward, mean_success_rate = ", mean_reward, std_reward, mean_success_rate )
 
@@ -112,8 +118,10 @@ if __name__ == "__main__":
     # test BC 
     # env = AddCostToRewardEnv(env_config)
     # evaluate_model_under_env(BC, env, 
-    #     policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
-    #     save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/"
+    #     # policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
+    #     policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/last_model.pt',
+    #     save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+    #     start_seed= 0
     #     )
     # env.close()
     

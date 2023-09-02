@@ -82,7 +82,7 @@ def visualize_h5py(args):
             ax.set_ylabel('Frequency')
             plt.show()
 
-def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
+def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_done = True):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
     
     o = env.reset(force_seed=seed)
@@ -114,7 +114,7 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir=""):
         
         cum_cost += info['cost']
         # print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
-        if done:
+        if end_eps_when_done and done:
             actual_heading[i+1:] = None
             actual_speed[i+1:] = None
             action_pred[i+1:] = None
