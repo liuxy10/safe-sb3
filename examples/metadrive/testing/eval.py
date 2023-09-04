@@ -85,17 +85,7 @@ def all_elements_in_dict_keys(elements, dictionary):
             return False
     return True
 
-
-if __name__ == "__main__":
-    import argparse
-    import os
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9/')
-    
-    parser.add_argument('--policy_load_dir', type=str, default = '')
-    
-    args = parser.parse_args()
-    args = vars(args)
+def main(args):
     env_config =  {
         "manual_control": False,
         "no_traffic": False,
@@ -115,94 +105,94 @@ if __name__ == "__main__":
     }
   
     
-    # test BC 
-    # env = AddCostToRewardEnv(env_config)
-    # evaluate_model_under_env(BC, env, 
-    #     # policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
-    #     policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/last_model.pt',
-    #     save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
-    #     start_seed= 0
-    #     )
-    # env.close()
+    if args['algorithm'] == 'bc':
+        env = AddCostToRewardEnv(env_config)
+        evaluate_model_under_env(BC, env, 
+            # policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
+            policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/last_model.pt',
+            save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+            start_seed= 0
+            )
+        env.close()
     
-    # test SAC
-    # env = AddCostToRewardEnv(env_config)
-    # evaluate_model_under_env(SAC, env, 
-        # policy_load_dir = 'examples/metadrive/example_policy/sac-diff-peak-1000.pt',
-        # save_fig_dir = save_fig_dir
-        # )
-    # env.close()
     
-    # # test DT guide policy only:
-    # env = AddCostToRewardEnv(env_config)
-    # evaluate_guide_policy_only(env, use_transformer_expert = True, 
-    #     expert_model_dir = "/home/xinyi/src/decision-transformer/gym/wandb/run-20230822_180622-20swd1g8",
-    #     save_fig_dir = save_fig_dir
-    #     )
-    # env.close()
-
-    # # test BC guide policy(redundant but interesting to try, should have the same result as 'test BC')
-    # env = AddCostToRewardEnv(env_config)
-    # evaluate_guide_policy_only(env, use_transformer_expert = False, 
-    #     expert_model_dir = 'examples/metadrive/example_policy/bc-diff-peak-10000.pt',
-    #     save_fig_dir = save_fig_dir
-    #     )
-    # env.close()
-
-    # test JS-iql, with dt as guide policy 
-    env = AddCostToRewardEnv(env_config)
-    # JS-iql policy 
-    policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
-    # DT policy as expert policy
-    expert_policy_dir = '/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy' # acc bounded 
+    elif args['algorithm'] == 'dt-js-iql':
+        env = AddCostToRewardEnv(env_config)
+        # JS-iql policy 
+        policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
+        # DT policy as expert policy
+        expert_policy_dir = '/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy' # acc bounded 
+        
+        expert_policy = js_utils.load_transformer(expert_policy_dir, device='cpu')
+        loaded_stats = js_utils.load_demo_stats(
+                path=expert_policy_dir
+            )
+        obs_mean, obs_std, reward_scale, target_return = loaded_stats
+        model_config = {
+                'expert_policy': expert_policy,
+                'use_transformer_expert': True,
+                'target_return': target_return,
+                'reward_scale':reward_scale, 
+                'obs_mean':obs_mean, 
+                'obs_std':obs_std,
+                'verbose':1,
+                'tensorboard_log':''
+                }
     
-    expert_policy = js_utils.load_transformer(expert_policy_dir, device='cpu')
-    loaded_stats = js_utils.load_demo_stats(
-            path=expert_policy_dir
-        )
-    obs_mean, obs_std, reward_scale, target_return = loaded_stats
-    model_config = {
-            'expert_policy': expert_policy,
-            'use_transformer_expert': True,
-            'target_return': target_return,
-            'reward_scale':reward_scale, 
-            'obs_mean':obs_mean, 
-            'obs_std':obs_std,
-            'verbose':1,
-            'tensorboard_log':''
-            }
- 
-    evaluate_model_under_env(JumpStartIQL, env, 
-        policy_load_dir = policy_load_dir,
-        save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
-        model_config = model_config
-        )
-    env.close()
+        evaluate_model_under_env(JumpStartIQL, env, 
+            policy_load_dir = policy_load_dir,
+            save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+            model_config = model_config
+            )
+        env.close()
+    
+    elif args['algorithm'] == 'bc-js-iql':
+        print("test JS-iql, with bc as guide policy ")
+        env = AddCostToRewardEnv(env_config)
+        # JS-iql policy 
+        policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
+        
+        # BC policy as expert policy
+        expert_policy_dir =  '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/model.pt'
+        expert_policy = js_utils.load_expert_policy(expert_policy_dir, env)
+        ####### should be replaced by bc-js-iql model #######
+        model_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
 
-    # # test JS-iql, with bc as guide policy 
-    # env = AddCostToRewardEnv(env_config)
-    # # BC policy as expert policy
-    # expert_policy_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt' 
-    # expert_policy = js_utils.load_expert_policy(expert_policy_dir, env)
-    # ####### should be replaced by bc-js-iql model #######
-    # model_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'
-    # #####################################################      
-    # model_config = {
-    #         'model_dir': model_dir,
-    #         'expert_policy': expert_policy,
-    #         'use_transformer_expert': False,
-    #         'target_return': None,
-    #         'reward_scale':None, 
-    #         'obs_mean':None, 
-    #         'obs_std':None,
-    #         'verbose':1,
-    #         'tensorboard_log':''
-    #         }
- 
-    # evaluate_model_under_env(JumpStartIQL, env, 
-    #     policy_load_dir = '',
-    #     save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
-    #     model_config = model_config
-    #     )
-    # env.close()
+        #####################################################      
+        model_config = {
+                'model_dir': model_dir,
+                'expert_policy': expert_policy,
+                'use_transformer_expert': False,
+                'target_return': None,
+                'reward_scale':None, 
+                'obs_mean':None, 
+                'obs_std':None,
+                'verbose':1,
+                'tensorboard_log':''
+                }
+    
+        evaluate_model_under_env(JumpStartIQL, env, 
+            policy_load_dir = policy_load_dir,
+            save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+            model_config = model_config
+            )
+        env.close()
 
+
+    
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9/')
+    parser.add_argument('--algorithm', '-alg', type=str, default='bc-js-iql')
+    
+    parser.add_argument('--policy_load_dir', type=str, default = '')
+    
+    args = parser.parse_args()
+    args = vars(args)
+
+    main(args)
+    
