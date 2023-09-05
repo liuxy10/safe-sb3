@@ -31,9 +31,12 @@ def extract_numbers_from_filename(filename):
 
 def save_data_to_pickle(filename, data):
     if os.path.exists(filename):
-        with open(filename, 'rb') as f:
-            existing_data = pickle.load(f)
-        existing_data.append(data)
+        try:
+            with open(filename, 'rb') as f:
+                existing_data = pickle.load(f)
+            existing_data.append(data)
+        except:
+            print(f"skipping data{filename}")
     else:
         existing_data = [data]
 
@@ -160,9 +163,9 @@ def main(args):
             "no_traffic": False,
             "agent_policy": ReplayEgoCarPolicy,
             "waymo_data_directory": args['pkl_dir'],
-            "case_num": 10000,
+            "case_num":args["num_of_scenarios"],
             "start_seed": args["start_seed"],
-            "evironment_num": args["num_of_scenarios"],
+            # "evironment_num": args["num_of_scenarios"],
             # have to be specified each time we use waymo environment for training purpose
             "physics_world_step_size": 1/WAYMO_SAMPLING_FREQ,
             "use_render": False,
@@ -206,7 +209,7 @@ if __name__ == "__main__":
     parser.add_argument('--start_seed', type=int, default='0')
     parser.add_argument('--dt_data_path', type=str,
                         default='~/src/data/metadrive/dt_pkl/waymo_n_10000_lam_1_eps_10/eps_0.pkl')
-    parser.add_argument('--num_of_scenarios', type=str, default='1000')
+    parser.add_argument('--num_of_scenarios', type=int, default='1000')
     parser.add_argument('--lamb', type=float, default=1.)
     # parser.add_argument('--map_dir', type = str, default = 'examples/metadrive/map_action_to_acc/log/test.npy')
     args = parser.parse_args()

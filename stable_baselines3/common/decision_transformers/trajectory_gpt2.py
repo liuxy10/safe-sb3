@@ -587,6 +587,7 @@ class GPT2Model(GPT2PreTrainedModel):
     @add_code_sample_docstrings(
 
         tokenizer_class=_TOKENIZER_FOR_DOC,
+        # processor_class=_TOKENIZER_FOR_DOC,
         checkpoint="gpt2",
         output_type=BaseModelOutputWithPastAndCrossAttentions,
         config_class=_CONFIG_FOR_DOC,

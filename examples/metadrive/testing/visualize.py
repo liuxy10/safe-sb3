@@ -124,7 +124,9 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_do
 
             break
 
-
+    print(f"avg action error (heading rate) = {np.mean((action_pred[0] - heading_rate_rec)**2)}")
+    print(f"avg action error (accel)        = {np.mean((action_pred[1] - acc_rec)**2)}")
+    
     plot_comparison = True
     action_pred = np.array(action_pred)
     if plot_comparison:

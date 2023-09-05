@@ -7,7 +7,7 @@ from matplotlib.pyplot import figure
 # from metadrive.engine.asset_loader import AssetLoader
 
 
-# import tensorflow as tf
+import tensorflow as tf
 
 # try:
 #     from metadrive.utils.waymo_utils.protos import scenario_pb2
@@ -16,6 +16,8 @@ from matplotlib.pyplot import figure
 import os
 import pickle
 import numpy as np
+import scenario_pb2
+
 
 
 class RoadLineType(Enum):
