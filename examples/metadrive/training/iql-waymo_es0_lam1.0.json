@@ -1,0 +1,4 @@
+{
+    "last_timestep": 905180,
+    "model.logger.dir": "tensorboard_logs/iql-waymo_es0_lam1.0/IQL_6"
+}

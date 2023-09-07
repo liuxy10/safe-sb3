@@ -1,6 +1,6 @@
 from stable_baselines3 import IQL
 import gym
-
+import json
 import h5py
 import os
 from datetime import datetime
@@ -9,7 +9,6 @@ import numpy as np
 from metadrive.policy.replay_policy import ReplayEgoCarPolicy, PMKinematicsEgoPolicy
 
 from utils import AddCostToRewardEnv
-from stable_baselines3.common.callbacks import CheckpointCallback
 
 
 
@@ -18,7 +17,7 @@ WAYMO_SAMPLING_FREQ = 10
 
 
 
-def main(args, is_test = False):
+def main(args):
     env_name = "waymo"
     lamb = args["lambda"]
     file_list = os.listdir(args['pkl_dir'])
@@ -54,25 +53,92 @@ def main(args, is_test = False):
         # + "_lam" + str(lamb) + '_' + date)
         + "_lam" + str(lamb))
     tensorboard_log = os.path.join(root_dir, experiment_name)
+    
+    print("step_per_chunk, first round = ", args['steps'], args['first_round'])
+    last_timestep = 0
+    env_config = env.config
+    
 
-    model = IQL("MlpPolicy", env, tensorboard_log=tensorboard_log, verbose=1, device="cpu")
-    model.learn(total_timesteps=args["steps"])
-    model.save("iql-" + env_name + "-es" + str(args["env_seed"]))
+    if args['first_round']:
+    
+        model = IQL(
+            "MlpPolicy", 
+            env, 
+            tensorboard_log=tensorboard_log, 
+            verbose=1, 
+            device="cpu")
+        
+        model.learn(total_timesteps=args['steps'])
+        last_timestep = model.num_timesteps
+        
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
+        buffer_path = os.path.join(model.logger.dir, "replay_buffer.pkl")
+        model.save_replay_buffer(buffer_path)
 
-    del model
-    env.close()
+        last_model_info = {
+            "last_timestep": last_timestep,
+            "model.logger.dir": model.logger.dir,
+        }
+        json_path = experiment_name + ".json"
 
+        # Save the dictionary as a JSON config file
+        with open(json_path, "w") as json_file:
+            json.dump(last_model_info, json_file, indent=4)
+        del model
+        env.close()
+        del env
+
+    else:
+        env = AddCostToRewardEnv(env_config)
+        json_path = experiment_name + ".json"
+
+        # Load the JSON config file as a dictionary
+        with open(json_path, "r") as json_file:
+            last_model_info = json.load(json_file)
+        
+        model = IQL.load(os.path.join(last_model_info['model.logger.dir'], 'last_model.pt'),
+                                        env, 
+                                        print_system_info= True,
+                                        device="cpu")
+        buffer_path = os.path.join(last_model_info['model.logger.dir'], "replay_buffer.pkl")
+        model.load_replay_buffer(buffer_path)
+        
+        last_timestep = last_model_info["last_timestep"]
+        model.num_timesteps = last_timestep + 1
+        
+        model.learn(total_timesteps=args['steps'],
+                    reset_num_timesteps=False)
+
+        model.save_replay_buffer(buffer_path)
+        model.save(os.path.join(model.logger.dir, "last_model.pt"))
+        last_timestep = model.num_timesteps
+
+        last_model_info = {
+            "last_timestep": last_timestep,
+            "model.logger.dir": model.logger.dir,
+        }
+        json_path = experiment_name + ".json"
+
+
+        # Save the dictionary as a JSON config file
+        with open(json_path, "w") as json_file:
+            json.dump(last_model_info, json_file, indent=4)
+        
+        del model
+        env.close()
+        del env
 
 if __name__ == "__main__": 
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9/')
+    parser.add_argument('--first_round','-f', action="store_true")
     
     parser.add_argument('--use_diff_action_space', '-diff', type=bool, default=True)
     parser.add_argument('--env_seed', '-es', type=int, default=0)
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
-    parser.add_argument('--num_of_scenarios', type=str, default="10000")
-    parser.add_argument('--steps', '-st', type=int, default=int(100000))
+    parser.add_argument('--num_of_scenarios', type=int, default=100)
+    parser.add_argument('--steps', '-st', type=int, default=100) # 100000
     args = parser.parse_args()
     args = vars(args)
 

@@ -3,7 +3,7 @@ import numpy as np
 import torch as th
 
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3 import JumpStartIQL, BC, JumpStartSAC, SAC
+from stable_baselines3 import JumpStartIQL, BC, JumpStartSAC, SAC, IQL
 from stable_baselines3.iql.policies import Actor, CnnPolicy, MlpPolicy, MultiInputPolicy, SACPolicy, ValueNet
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn, Schedule, TrainFreq, TrainFrequencyUnit
 from stable_baselines3.js_sac import utils as js_utils
@@ -34,7 +34,7 @@ def evaluate_model_under_env(
         ):
 
 
-    if training_method in (BC, SAC):
+    if training_method in (BC, SAC, IQL):
         model = training_method("MlpPolicy", env_test)
 
         model.set_parameters(policy_load_dir)
@@ -104,9 +104,9 @@ def main(args):
                side_detector=dict(num_lasers=20, distance=50)) # 160,
     }
   
-    
+    env = AddCostToRewardEnv(env_config)
     if args['algorithm'] == 'bc':
-        env = AddCostToRewardEnv(env_config)
+        print("test bc only")
         evaluate_model_under_env(BC, env, 
             # policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
             policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/last_model.pt',
@@ -115,9 +115,12 @@ def main(args):
             )
         env.close()
     
-    
+
+    ## test of DT still goes into the eval in DT repo
+   
+   # js-dt
     elif args['algorithm'] == 'dt-js-iql':
-        env = AddCostToRewardEnv(env_config)
+        
         # JS-iql policy 
         policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
         # DT policy as expert policy
@@ -148,7 +151,6 @@ def main(args):
     
     elif args['algorithm'] == 'bc-js-iql':
         print("test JS-iql, with bc as guide policy ")
-        env = AddCostToRewardEnv(env_config)
         # JS-iql policy 
         policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
         
