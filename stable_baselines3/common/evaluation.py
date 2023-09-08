@@ -73,6 +73,7 @@ def evaluate_policy(
         )
 
     n_envs = env.num_envs
+    max_id = int(env.envs[0].config['start_case_index'] + env.envs[0].config['case_num'])
     episode_rewards = []
     episode_lengths = []
     episode_success_rates = []
@@ -138,12 +139,18 @@ def evaluate_policy(
                         episode_counts[i] += 1
                     current_rewards[i] = 0
                     current_lengths[i] = 0
-                    # env.envs[0]._reset_global_seed(force_seed = episode_counts + int(env.envs[0].config['start_case_index']))
-                    # seems like the random seed is not working
-                    
+
+                    current_seed = int(episode_counts[0] + env.envs[0].config['start_case_index'])
+                    print("current_seed", current_seed)
+                    if current_seed < max_id:
+                        env.envs[0]._reset_global_seed(force_seed = current_seed)
+                        print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
+                    else:
+                        print("Evaluation done")
+                        break 
                     # import pdb; pdb.set_trace()
                     
-                    # print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
+                    
 
         observations = new_observations
 

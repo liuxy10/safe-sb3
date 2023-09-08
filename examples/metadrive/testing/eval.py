@@ -60,7 +60,11 @@ def evaluate_model_under_env(
         return 
 
     header = "-"*10+" Evaluation of " + fn + "-"*10
-    mean_reward, std_reward, mean_success_rate= evaluate_policy(model, env_test, n_eval_episodes=env_test.config['case_num'], deterministic=True, render=False)
+    mean_reward, std_reward, mean_success_rate= evaluate_policy(model, 
+                                                                env_test, 
+                                                                n_eval_episodes=env_test.config['case_num'], 
+                                                                deterministic=True, 
+                                                                render=False)
     
     print(header)
     print("mean_reward = ", mean_reward)
@@ -98,7 +102,6 @@ def main(args):
         "horizon": 90/5,
         "reactive_traffic": False,
                  "vehicle_config": dict(
-               # no_wheel_friction=True,
                lidar=dict(num_lasers=80, distance=50, num_others=4), # 120
                lane_line_detector=dict(num_lasers=12, distance=50), # 12
                side_detector=dict(num_lasers=20, distance=50)) # 160,
