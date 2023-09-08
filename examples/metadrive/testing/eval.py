@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional, Tuple, Type, TypeVar, Union
 import numpy as np
 import torch as th
+import json
 
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import JumpStartIQL, BC, JumpStartSAC, SAC, IQL
@@ -70,6 +71,20 @@ def evaluate_model_under_env(
     print("mean_reward = ", mean_reward)
     print("std_reward = ",std_reward)
     print("mean_success_rate = ", mean_success_rate)
+
+    exp_result ={
+        "exp_name": fn,
+        "mean_reward": mean_reward,
+        "std_reward": std_reward,
+        "mean_success_rate": mean_success_rate
+    }
+    json_path = fn + ".json"
+
+    # Save the dictionary as a JSON config file
+    with open(json_path, "w") as json_file:
+        json.dump(exp_result, json_file, indent=4)
+
+
 
     for seed in tqdm.tqdm(range( start_seed,  start_seed + env_test.config['case_num'])):
         plot_waymo_vs_pred(env_test, 
@@ -195,6 +210,7 @@ if __name__ == "__main__":
     parser.add_argument('--algorithm', '-alg', type=str, default='bc-js-iql')
     
     parser.add_argument('--policy_load_dir', type=str, default = '')
+    parser.add_argument('--save_result_dir', type=str, default = 'eval_results')
     
     args = parser.parse_args()
     args = vars(args)

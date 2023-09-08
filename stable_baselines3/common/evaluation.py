@@ -141,10 +141,10 @@ def evaluate_policy(
                     current_lengths[i] = 0
 
                     current_seed = int(episode_counts[0] + env.envs[0].config['start_case_index'])
-                    print("current_seed", current_seed)
+                    # print("current_seed", current_seed)
                     if current_seed < max_id:
                         env.envs[0]._reset_global_seed(force_seed = current_seed)
-                        print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
+                        # print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
                     else:
                         print("Evaluation done")
                         break 
