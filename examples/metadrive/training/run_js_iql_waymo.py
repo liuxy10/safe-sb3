@@ -14,6 +14,9 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import JumpStartIQL
 from stable_baselines3.js_sac import utils as js_utils
 
+import sys
+sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/training/")
+
 
 from utils import AddCostToRewardEnv
 import matplotlib.pyplot as plt
@@ -60,7 +63,7 @@ def main(args):
         env.set_num_different_layouts(100)
 
     # specify tensorboard log settings
-    root_dir = "tensorboard_logs"
+    root_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/results/tb"
     experiment_name = (
         "js-iql-waymo_es" + str(args["env_seed"])
         + "_lamb" + str(lamb))
@@ -93,9 +96,6 @@ def main(args):
     print("step_per_chunk, first round = ", args['steps'], args['first_round'])
     last_timestep = 0
     env_config = env.config
-    buffer_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/replay_buffer.pkl"
-    params_path = "/home/xinyi/src/safe-sb3/examples/metadrive/training/params.npy"
-    model_dir = f"/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/{experiment_name}/IQL_0"
 
     if args['first_round']:
 
@@ -195,11 +195,13 @@ if __name__ == "__main__":
     parser.add_argument('--device', '-d', type=str, default="cpu")
     parser.add_argument('--expert_model_dir', '-emd', type=str,
                         default='/home/xinyi/src/decision-transformer/gym/wandb/run-20230901_024022-3hhgyjq0') # change back to acc 1
-    
+    parser.add_argument(
+        '--use_transformer_expert', '-dt',action='store_true', default=False
+    )
     parser.add_argument('--lambda', '-lam', type=float, default=1.)
     parser.add_argument('--num_of_scenarios', type=int, default=1e4)  # 1e4
 
-    parser.add_argument('--steps', '-st', type=int, default=int(2e4))  
+    parser.add_argument('--steps', '-st', type=int, default=int(100))  
     # 1e6 = 50 chunks* 20000 num_step per chunk
     parser.add_argument('--num_chunks', type=int, default=50)
     parser.add_argument('--random', '-r', action='store_true', default=False)

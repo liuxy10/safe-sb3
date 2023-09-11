@@ -1,6 +1,5 @@
 {
     "exp_name": "JumpStartIQL_dt=True",
-    "mean_reward": 148.9215816440666,
-    "std_reward": 191.47459700637896,
-    "mean_success_rate": 0.74
-}
+    "policy_load_dir": "/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt",
+    "model_config": {
+        "expert_policy": 

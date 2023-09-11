@@ -31,7 +31,9 @@ keys/
 /env
 /venv
 
-
+examples/metadrive/results/*
+*.json
+examples/metadrive/training/*.json
 *.sublime-project
 *.sublime-workspace
 

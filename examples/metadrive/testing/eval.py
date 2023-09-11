@@ -74,6 +74,7 @@ def evaluate_model_under_env(
 
     exp_result ={
         "exp_name": fn,
+        "policy_load_dir": policy_load_dir,
         "mean_reward": mean_reward,
         "std_reward": std_reward,
         "mean_success_rate": mean_success_rate

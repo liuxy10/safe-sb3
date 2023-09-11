@@ -47,7 +47,7 @@ def main(args):
     )
    
     env.seed(args["env_seed"])
-    root_dir = "tensorboard_logs"
+    root_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/results/tb"
     experiment_name = (
         "iql-" + env_name + "_es" + str(args["env_seed"]) 
         # + "_lam" + str(lamb) + '_' + date)

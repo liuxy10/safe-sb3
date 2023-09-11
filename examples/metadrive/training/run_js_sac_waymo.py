@@ -53,7 +53,7 @@ def main(args):
         env.set_num_different_layouts(100)
 
 
-    root_dir = "tensorboard_logs"
+    root_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/results/tb"
     experiment_name = (
         "js-sac-waymo_es" + str(args["env_seed"])
         + "_lamb" + str(lamb))
