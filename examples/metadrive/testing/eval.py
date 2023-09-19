@@ -36,9 +36,14 @@ def evaluate_model_under_env(
 
 
     if training_method in (BC, SAC, IQL):
-        model = training_method("MlpPolicy", env_test)
+        # model = training_method("MlpPolicy", env_test)
 
-        model.set_parameters(policy_load_dir)
+        # model.set_parameters(policy_load_dir)
+
+        model = training_method.load(policy_load_dir, 
+                            env_test,
+                            device = 'cpu'
+                            )
         fn = training_method.__name__ 
         
 
@@ -61,7 +66,7 @@ def evaluate_model_under_env(
         return 
 
     header = "-"*10+" Evaluation of " + fn + "-"*10
-    mean_reward, std_reward, mean_success_rate= evaluate_policy(model, 
+    mean_reward, std_reward,  mean_cost, std_cost, mean_success_rate= evaluate_policy(model, 
                                                                 env_test, 
                                                                 n_eval_episodes=env_test.config['case_num'], 
                                                                 deterministic=True, 
@@ -70,6 +75,8 @@ def evaluate_model_under_env(
     print(header)
     print("mean_reward = ", mean_reward)
     print("std_reward = ",std_reward)
+    print("mean_cost = ", mean_cost)
+    print("std_cots = ",std_cost)
     print("mean_success_rate = ", mean_success_rate)
 
     exp_result ={
@@ -77,6 +84,8 @@ def evaluate_model_under_env(
         "policy_load_dir": policy_load_dir,
         "mean_reward": mean_reward,
         "std_reward": std_reward,
+        "mean_cost": mean_cost,
+        "std_cost": std_cost,
         "mean_success_rate": mean_success_rate
     }
     json_path = fn + ".json"
@@ -124,15 +133,32 @@ def main(args):
     }
   
     env = AddCostToRewardEnv(env_config)
+
+    # BC only 
     if args['algorithm'] == 'bc':
         print("test bc only")
         evaluate_model_under_env(BC, env, 
-            # policy_load_dir = '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
-            policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/last_model.pt',
+            policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/model.pt',
+            # policy_load_dir= '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-cost-default/BC_1000/model.pt',
+            # policy_load_dir= '/home/xinyi/src/safe-sb3/tensorboard_log/bc-waymo-es0/BC_0/model.pt',
             save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
-            start_seed= 0
+            start_seed= 10000
             )
         env.close()
+
+
+     # iql only 
+    if args['algorithm'] == 'iql':
+        print("test iql only")
+        evaluate_model_under_env(IQL, env, 
+            # policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/results/tb/iql-waymo_es0_lam1.0/msc/model.pt',
+            # policy_load_dir= '/home/xinyi/src/safe-sb3/examples/metadrive/results/tb/iql-waymo_es0_lam1.0/IQL_2/last_model.pt',
+            policy_load_dir= '/home/xinyi/src/safe-sb3/results/tb/iql/1/model.pt',
+            save_fig_dir = "/home/xinyi/src/safe-sb3/examples/metadrive/figs/",
+            start_seed= 10000
+            )
+        env.close()
+    
     
 
     ## test of DT still goes into the eval in DT repo
@@ -141,7 +167,8 @@ def main(args):
     elif args['algorithm'] == 'dt-js-iql':
         
         # JS-iql policy 
-        policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
+        # policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0_transformer/IQL_0/model.pt'   
+        policy_load_dir = '/home/xinyi/src/safe-sb3/results/tb/dt-js-iql/1/last_model.pt'   
         # DT policy as expert policy
         expert_policy_dir = '/home/xinyi/src/decision-transformer/gym/wandb/run-20230823_230743-3s6y7mzy' # acc bounded 
         
@@ -171,17 +198,13 @@ def main(args):
     elif args['algorithm'] == 'bc-js-iql':
         print("test JS-iql, with bc as guide policy ")
         # JS-iql policy 
-        policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
-        
+        # policy_load_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
+        policy_load_dir ='/home/xinyi/src/safe-sb3/results/tb/bc-js-iql/1/last_model.pt'
         # BC policy as expert policy
         expert_policy_dir =  '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_log/bc-waymo-cost-default/BC_0/model.pt'
         expert_policy = js_utils.load_expert_policy(expert_policy_dir, env)
-        ####### should be replaced by bc-js-iql model #######
-        model_dir = '/home/xinyi/src/safe-sb3/examples/metadrive/training/tensorboard_logs/js-iql-waymo_es0_lamb1.0/IQL_0/model.pt'   
-
-        #####################################################      
         model_config = {
-                'model_dir': model_dir,
+                'model_dir': policy_load_dir,
                 'expert_policy': expert_policy,
                 'use_transformer_expert': False,
                 'target_return': None,
@@ -200,6 +223,8 @@ def main(args):
         env.close()
 
 
+
+
     
 
 
@@ -208,7 +233,7 @@ if __name__ == "__main__":
     import os
     parser = argparse.ArgumentParser()
     parser.add_argument('--pkl_dir', '-pkl', type=str, default='/home/xinyi/src/data/metadrive/pkl_9/')
-    parser.add_argument('--algorithm', '-alg', type=str, default='bc-js-iql')
+    parser.add_argument('--algorithm', '-alg', type=str, default='iql')
     
     parser.add_argument('--policy_load_dir', type=str, default = '')
     parser.add_argument('--save_result_dir', type=str, default = 'eval_results')

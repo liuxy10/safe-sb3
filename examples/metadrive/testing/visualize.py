@@ -19,7 +19,7 @@ sys.path.append("/home/xinyi/src/safe-sb3/examples/metadrive/training")
 from utils import AddCostToRewardEnv
 from combine_pkls_for_dt import collect_rollout_in_one_seed
 
-sys.path.append("/home/xinyi/src/decision-transformer/gym/decision_transformer/evaluation")
+# sys.path.append("/home/xinyi/src/decision-transformer/gym/decision_transformer/evaluation")
 
 from plot_utils import plot_states_compare
 
@@ -82,7 +82,7 @@ def visualize_h5py(args):
             ax.set_ylabel('Frequency')
             plt.show()
 
-def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_done = True):
+def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", save_render_dir="", end_eps_when_done = True):
     from collect_h5py_from_pkl import get_current_ego_trajectory_old
     
     o = env.reset(force_seed=seed)
@@ -102,9 +102,14 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_do
 
     cum_rew, cum_cost = 0,0
     for i in range(len(ts)):
-        action, _ = model.predict(o, deterministic = True)
-        # action = [0, 4]
-        o, r, done, info = env.step(action)
+        if md_name in ['cvpo', 'js-cvpo']:
+            res = model.act(o, deterministic=True, with_logprob=False)
+            action = res[0]
+            o, r, done, info = env.step(action)
+        else:
+            action, _ = model.predict(o, deterministic = True)
+            # action = [0, 4]
+            o, r, done, info = env.step(action)
         actual_heading[i] = env.engine.agent_manager.active_agents['default_agent'].heading_theta
         actual_speed[i] = np.array(env.engine.agent_manager.active_agents['default_agent'].speed/3.6)
         actual_pos [i,:] = np.array(env.engine.agent_manager.active_agents['default_agent'].position)
@@ -124,8 +129,8 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_do
 
             break
 
-    print(f"avg action error (heading rate) = {np.mean((action_pred[0] - heading_rate_rec)**2)}")
-    print(f"avg action error (accel)        = {np.mean((action_pred[1] - acc_rec)**2)}")
+    # print(f"avg action error (heading rate) = {np.mean((action_pred[0] - heading_rate_rec)**2)}")
+    # print(f"avg action error (accel)        = {np.mean((action_pred[1] - acc_rec)**2)}")
     
     plot_comparison = True
     action_pred = np.array(action_pred)
@@ -139,7 +144,7 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", end_eps_when_do
                    save_fig_dir = savefig_dir,
                    seed=seed, 
                    succeed = info['arrive_dest'],
-                   md_name = 'BC')
+                   md_name = md_name)
         # pos_pred = np.array(pos_pred)
         # fig, axs = plt.subplots(2, 2)
 

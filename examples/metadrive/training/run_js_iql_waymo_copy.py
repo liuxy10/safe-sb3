@@ -110,9 +110,7 @@ def main(args):
         obs_std=obs_std,
         tensorboard_log=tensorboard_log,
         verbose=1,
-        device=device,
-        guidance_timesteps = 1e6,
-        learning_rate= 3e-5)
+        device=device)
 
 
         model.learn(total_timesteps=args['steps'])

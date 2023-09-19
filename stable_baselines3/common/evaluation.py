@@ -76,6 +76,7 @@ def evaluate_policy(
     max_id = int(env.envs[0].config['start_case_index'] + env.envs[0].config['case_num'])
     episode_rewards = []
     episode_lengths = []
+    episode_costs = []
     episode_success_rates = []
 
     episode_counts = np.zeros(n_envs, dtype="int")
@@ -83,6 +84,7 @@ def evaluate_policy(
     episode_count_targets = np.array([(n_eval_episodes + i) // n_envs for i in range(n_envs)], dtype="int")
 
     current_rewards = np.zeros(n_envs)
+    current_costs = np.zeros(n_envs)
     current_lengths = np.zeros(n_envs, dtype="int")
     observations = env.reset()
     states = None
@@ -98,7 +100,9 @@ def evaluate_policy(
             deterministic=deterministic,
         )
         new_observations, rewards, dones, infos = env.step(actions)
+        costs = np.array([infos[i]['cost'] for i in range(len(infos))])
         current_rewards += rewards
+        current_costs += costs
         current_lengths += 1
         # env.reset(force_seed = episode_counts)
         for i in range(n_envs):
@@ -127,6 +131,7 @@ def evaluate_policy(
                             # has been wrapped with it. Use those rewards instead.
                             
                             episode_rewards.append(info["episode"]["r"])
+                            episode_costs.append(info["episode"]["cost"])
                             episode_lengths.append(info["episode"]["l"])
                             
                             episode_success_rates.append(info['arrive_dest'])
@@ -134,17 +139,19 @@ def evaluate_policy(
                             episode_counts[i] += 1
                     else:
                         episode_rewards.append(current_rewards[i])
+                        episode_costs.append(current_costs[i])
                         episode_lengths.append(current_lengths[i])
                         episode_success_rates.append(info['arrive_dest'])
                         episode_counts[i] += 1
                     current_rewards[i] = 0
+                    current_costs[i] = 0
                     current_lengths[i] = 0
 
                     current_seed = int(episode_counts[0] + env.envs[0].config['start_case_index'])
                     # print("current_seed", current_seed)
                     if current_seed < max_id:
                         env.envs[0]._reset_global_seed(force_seed = current_seed)
-                        # print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
+                        print("env.engine.global_random_seed = ", env.envs[0].engine.global_random_seed)
                     else:
                         print("Evaluation done")
                         break 
@@ -159,9 +166,10 @@ def evaluate_policy(
 
     mean_reward = np.mean(episode_rewards)
     std_reward = np.std(episode_rewards)
+    mean_cost, std_cost = np.mean(episode_costs), np.std(episode_costs)
     mean_success_rate = np.mean(episode_success_rates)
     if reward_threshold is not None:
         assert mean_reward > reward_threshold, "Mean reward below threshold: " f"{mean_reward:.2f} < {reward_threshold:.2f}"
     if return_episode_rewards:
         return episode_rewards, episode_lengths
-    return mean_reward, std_reward, mean_success_rate
+    return mean_reward, std_reward, mean_cost, std_cost, mean_success_rate
