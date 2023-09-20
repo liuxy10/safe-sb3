@@ -17,6 +17,7 @@ _build/
 *.pth
 .pytype/
 git_rewrite_commit_history.sh
+results/*
 
 **/**/.pkl
 examples/metadrive/tfrecord_9/*
@@ -31,7 +32,9 @@ keys/
 /env
 /venv
 
-
+examples/metadrive/results/*
+*.json
+examples/metadrive/training/*.json
 *.sublime-project
 *.sublime-workspace
 
@@ -51,9 +54,10 @@ src
 .cache
 *.lprof
 *.prof
+*.jpg
 
 MUJOCO_LOG.TXT
 
 tensorboard*
 
-data*
+# data*

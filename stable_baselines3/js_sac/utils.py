@@ -82,14 +82,16 @@ def load_transformer(model_dir, device):
     config_path = os.path.join(model_dir, 'config.yaml')
     with open(config_path, 'r') as stream:
         config = yaml.safe_load(stream)
-    if config['env']['value'] == 'waymo':
-        state_dim= 325
-        act_dim = 2
-        max_ep_len = 300
-    else:
-        state_dim = config['state_dim']['value']
-        act_dim = config['act_dim']['value']
-        max_ep_len = config['max_ep_len']['value']
+    # # TODO: delete this part after adding these three into variant and save them in dt
+    # if config['env']['value'] == 'waymo':
+    #     state_dim= 145
+    #     act_dim = 2
+    #     max_ep_len = 90
+    # else:
+    state_dim = config['state_dim']['value']
+    act_dim = config['act_dim']['value']
+    max_ep_len = config['max_ep_len']['value']
+    # print("[js_sac] max_ep_len, config['K']['value']", max_ep_len, config['K']['value'])
     model = DecisionTransformer(
         state_dim=state_dim,
         act_dim=act_dim,
@@ -105,6 +107,7 @@ def load_transformer(model_dir, device):
         attn_pdrop=config['dropout']['value'],
     )
     state_dict_path = os.path.join(model_dir, 'model.pt')
+    # import pdb; pdb.set_trace()
     model.load_state_dict(torch.load(state_dict_path))
     model.to(device)
     model.eval()

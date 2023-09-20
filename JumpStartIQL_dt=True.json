@@ -1,0 +1,9 @@
+{
+    "exp_name": "JumpStartIQL_dt=True",
+    "policy_load_dir": "/home/xinyi/src/safe-sb3/results/tb/dt-js-iql/1/last_model.pt",
+    "mean_reward": 134.69358277143144,
+    "std_reward": 175.98498558097592,
+    "mean_cost": 1.15,
+    "std_cost": 2.056088519495209,
+    "mean_success_rate": 0.73
+}

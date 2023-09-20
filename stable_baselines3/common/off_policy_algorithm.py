@@ -374,6 +374,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             and scaled action that will be stored in the replay buffer.
             The two differs when the action space is not normalized (bounds are not [-1, 1]).
         """
+        # print("[off_policy_algo]!!!!!!!!!!!!!!!! it goes here")
         # Select action randomly or according to policy
         if self.num_timesteps < learning_starts and not (self.use_sde and self.use_sde_at_warmup):
             # Warmup phase
@@ -415,6 +416,9 @@ class OffPolicyAlgorithm(BaseAlgorithm):
             if rew_mean > self.max_epi_rew:
                 self.save(os.path.join(self.logger.dir, "model.pt"))
                 self.max_epi_rew = rew_mean
+            # if self.num_timesteps % self.num_steps_per_save == 0:
+            # if True:
+            #     self.save(os.path.join(self.logger.dir, "model.pt"))
             if self.ep_info_buffer[0].get("c") is not None:
                 cost_mean = safe_mean([ep_info["c"] for ep_info in self.ep_info_buffer])
                 self.logger.record("rollout/ep_cost_mean", cost_mean)

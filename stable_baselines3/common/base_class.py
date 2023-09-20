@@ -20,6 +20,8 @@ from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.policies import BasePolicy
+ 
+# from stable_baselines3 import JumpStartIQL
 from stable_baselines3.common.preprocessing import check_for_nested_spaces, is_image_space, is_image_space_channels_first
 from stable_baselines3.common.save_util import load_from_zip_file, recursive_getattr, recursive_setattr, save_to_zip_file
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule, TensorDict
@@ -141,10 +143,12 @@ class BaseAlgorithm(ABC):
         self.start_time = 0.0
         self.learning_rate = learning_rate
         self.tensorboard_log = tensorboard_log
-        self._last_obs = None  # type: Optional[Union[np.ndarray, Dict[str, np.ndarray]]]
+        # type: Optional[Union[np.ndarray, Dict[str, np.ndarray]]]
+        self._last_obs = None
         self._last_episode_starts = None  # type: Optional[np.ndarray]
         # When using VecNormalize:
-        self._last_original_obs = None  # type: Optional[Union[np.ndarray, Dict[str, np.ndarray]]]
+        # type: Optional[Union[np.ndarray, Dict[str, np.ndarray]]]
+        self._last_original_obs = None
         self._episode_num = 0
         # Used for gSDE only
         self.use_sde = use_sde
@@ -189,14 +193,17 @@ class BaseAlgorithm(ABC):
 
             # Catch common mistake: using MlpPolicy/CnnPolicy instead of MultiInputPolicy
             if policy in ["MlpPolicy", "CnnPolicy"] and isinstance(self.observation_space, spaces.Dict):
-                raise ValueError(f"You must use `MultiInputPolicy` when working with dict observation space, not {policy}")
+                raise ValueError(
+                    f"You must use `MultiInputPolicy` when working with dict observation space, not {policy}")
 
             if self.use_sde and not isinstance(self.action_space, spaces.Box):
-                raise ValueError("generalized State-Dependent Exploration (gSDE) can only be used with continuous actions.")
+                raise ValueError(
+                    "generalized State-Dependent Exploration (gSDE) can only be used with continuous actions.")
 
             if isinstance(self.action_space, spaces.Box):
                 assert np.all(
-                    np.isfinite(np.array([self.action_space.low, self.action_space.high]))
+                    np.isfinite(
+                        np.array([self.action_space.low, self.action_space.high]))
                 ), "Continuous action space must have a finite lower and upper bound"
 
     @staticmethod
@@ -220,7 +227,8 @@ class BaseAlgorithm(ABC):
                 env = Monitor(env, info_keywords=("is_success",))
             if verbose >= 1:
                 print("Wrapping the env in a DummyVecEnv.")
-            env = DummyVecEnv([lambda: env])  # type: ignore[list-item, return-value]
+            # type: ignore[list-item, return-value]
+            env = DummyVecEnv([lambda: env])
 
         # Make sure that dict-spaces are not nested (not supported)
         check_for_nested_spaces(env.observation_space)
@@ -233,7 +241,8 @@ class BaseAlgorithm(ABC):
                 # the other channel last), VecTransposeImage will throw an error
                 for space in env.observation_space.spaces.values():
                     wrap_with_vectranspose = wrap_with_vectranspose or (
-                        is_image_space(space) and not is_image_space_channels_first(space)  # type: ignore[arg-type]
+                        is_image_space(space) and not is_image_space_channels_first(
+                            space)  # type: ignore[arg-type]
                     )
             else:
                 wrap_with_vectranspose = is_image_space(env.observation_space) and not is_image_space_channels_first(
@@ -281,7 +290,8 @@ class BaseAlgorithm(ABC):
         :param num_timesteps: current number of timesteps
         :param total_timesteps:
         """
-        self._current_progress_remaining = 1.0 - float(num_timesteps) / float(total_timesteps)
+        self._current_progress_remaining = 1.0 - \
+            float(num_timesteps) / float(total_timesteps)
 
     def _update_learning_rate(self, optimizers: Union[List[th.optim.Optimizer], th.optim.Optimizer]) -> None:
         """
@@ -292,12 +302,14 @@ class BaseAlgorithm(ABC):
             An optimizer or a list of optimizers.
         """
         # Log the current learning rate
-        self.logger.record("train/learning_rate", self.lr_schedule(self._current_progress_remaining))
+        self.logger.record("train/learning_rate",
+                           self.lr_schedule(self._current_progress_remaining))
 
         if not isinstance(optimizers, list):
             optimizers = [optimizers]
         for optimizer in optimizers:
-            update_learning_rate(optimizer, self.lr_schedule(self._current_progress_remaining))
+            update_learning_rate(optimizer, self.lr_schedule(
+                self._current_progress_remaining))
 
     def _excluded_save_params(self) -> List[str]:
         """
@@ -428,24 +440,26 @@ class BaseAlgorithm(ABC):
             self.obs_dim = self.observation_space.shape[0]
             self.ac_dim = self.action_space.shape[0]
             self.hist_obs = self._last_obs.reshape(1, self.obs_dim)
-            self.hist_ac= np.zeros((0, self.ac_dim))
+            self.hist_ac = np.zeros((0, self.ac_dim))
             self.hist_re = np.zeros(0)
             if (
-                hasattr(self, 'use_transformer_expert') 
+                hasattr(self, 'use_transformer_expert')
                 and self.use_transformer_expert
             ):
                 self.target_return = np.array([[self.target_return_init]])
             self.timesteps = np.zeros((1, 1))
 
             # pytype: enable=annotation-type-mismatch
-            self._last_episode_starts = np.ones((self.env.num_envs,), dtype=bool)
+            self._last_episode_starts = np.ones(
+                (self.env.num_envs,), dtype=bool)
             # Retrieve unnormalized observation for saving into the buffer
             if self._vec_normalize_env is not None:
                 self._last_original_obs = self._vec_normalize_env.get_original_obs()
 
         # Configure logger's outputs if no logger was passed
         if not self._custom_logger:
-            self._logger = utils.configure_logger(self.verbose, self.tensorboard_log, tb_log_name, reset_num_timesteps)
+            self._logger = utils.configure_logger(
+                self.verbose, self.tensorboard_log, tb_log_name, reset_num_timesteps)
 
         # Create eval callback if needed
         callback = self._init_callback(callback, progress_bar)
@@ -512,7 +526,8 @@ class BaseAlgorithm(ABC):
             f"a different number of environments, you must use `{self.__class__.__name__}.load(path, env)` instead"
         )
         # Check that the observation spaces match
-        check_for_correct_spaces(env, self.observation_space, self.action_space)
+        check_for_correct_spaces(
+            env, self.observation_space, self.action_space)
         # Update VecNormalize object
         # otherwise the wrong env may be used, see https://github.com/DLR-RM/stable-baselines3/issues/637
         self._vec_normalize_env = unwrap_vec_normalize(env)
@@ -578,7 +593,8 @@ class BaseAlgorithm(ABC):
         """
         if seed is None:
             return
-        set_random_seed(seed, using_cuda=self.device.type == th.device("cuda").type)
+        set_random_seed(seed, using_cuda=self.device.type ==
+                        th.device("cuda").type)
         self.action_space.seed(seed)
         # self.env is always a VecEnv
         if self.env is not None:
@@ -622,7 +638,8 @@ class BaseAlgorithm(ABC):
                 # What errors recursive_getattr could throw? KeyError, but
                 # possible something else too (e.g. if key is an int?).
                 # Catch anything for now.
-                raise ValueError(f"Key {name} is an invalid object name.") from e
+                raise ValueError(
+                    f"Key {name} is an invalid object name.") from e
 
             if isinstance(attr, th.optim.Optimizer):
                 # Optimizers do not support "strict" keyword...
@@ -718,17 +735,20 @@ class BaseAlgorithm(ABC):
             )
 
         if "observation_space" not in data or "action_space" not in data:
-            raise KeyError("The observation_space and action_space were not given, can't verify new environments")
+            raise KeyError(
+                "The observation_space and action_space were not given, can't verify new environments")
 
         # Gym -> Gymnasium space conversion
         for key in {"observation_space", "action_space"}:
-            data[key] = _convert_space(data[key])  # pytype: disable=unsupported-operands
+            # pytype: disable=unsupported-operands
+            data[key] = _convert_space(data[key])
 
         if env is not None:
             # Wrap first if needed
             env = cls._wrap_env(env, data["verbose"])
             # Check if given env is valid
-            check_for_correct_spaces(env, data["observation_space"], data["action_space"])
+            check_for_correct_spaces(
+                env, data["observation_space"], data["action_space"])
             # Discard `_last_obs`, this will force the env to reset before training
             # See issue https://github.com/DLR-RM/stable-baselines3/issues/597
             if force_reset and data is not None:
@@ -742,12 +762,29 @@ class BaseAlgorithm(ABC):
                 env = data["env"]
 
         # pytype: disable=not-instantiable,wrong-keyword-args
+        
+        # if cls == JumpStartIQL:
+        #     model = cls(
+        #         policy=data["policy_class"],
+        #         env=env, 
+        #         expert_policy = kwargs["expert_policy"],
+        #         use_transformer_expert = kwargs["use_transformer_expert"],
+        #         target_return= kwargs["target_return"],
+        #         reward_scale= kwargs ["reward_scale"],
+        #         obs_mean = kwargs["obs_mean"],
+        #         obs_std = kwargs["obs_std"],
+        #         tensorboard_log= kwargs["tensorboard_log"],
+        #         verbose=1
+        #     )
+        # else:
         model = cls(
             policy=data["policy_class"],
             env=env,
             device=device,
             _init_setup_model=False,  # type: ignore[call-arg]
         )
+
+
         # pytype: enable=not-instantiable,wrong-keyword-args
 
         # load parameters
@@ -786,12 +823,14 @@ class BaseAlgorithm(ABC):
                     continue
                 # Set the data attribute directly to avoid issue when using optimizers
                 # See https://github.com/DLR-RM/stable-baselines3/issues/391
-                recursive_setattr(model, f"{name}.data", pytorch_variables[name].data)
+                recursive_setattr(
+                    model, f"{name}.data", pytorch_variables[name].data)
 
         # Sample gSDE exploration matrix, so it uses the right device
         # see issue #44
         if model.use_sde:
-            model.policy.reset_noise()  # type: ignore[operator]  # pytype: disable=attribute-error
+            # type: ignore[operator]  # pytype: disable=attribute-error
+            model.policy.reset_noise()
         return model
 
     def get_parameters(self) -> Dict[str, Dict]:
@@ -857,4 +896,5 @@ class BaseAlgorithm(ABC):
         # Build dict of state_dicts
         params_to_save = self.get_parameters()
 
-        save_to_zip_file(path, data=data, params=params_to_save, pytorch_variables=pytorch_variables)
+        save_to_zip_file(path, data=data, params=params_to_save,
+                         pytorch_variables=pytorch_variables)

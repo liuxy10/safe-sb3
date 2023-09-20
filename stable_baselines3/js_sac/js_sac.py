@@ -123,12 +123,14 @@ class JumpStartSAC(SAC):
             and scaled action that will be stored in the replay buffer.
             The two differs when the action space is not normalized (bounds are not [-1, 1]).
         """
+        print("[js_sac] !!!!!!!!!!!!!!!!!!!!!!!! it goes here !!!!!!!!!!!!!")
         # Select action randomly or according to policy
         if self.num_timesteps < learning_starts and not (self.use_sde and self.use_sde_at_warmup):
             # Warmup phase
             unscaled_action = np.array([self.action_space.sample() for _ in range(n_envs)])
         else:
             guide_prob = self.get_guide_probability()
+            print("[js_iql] guide_prob", guide_prob)
             use_guide = np.random.choice([False, True], p=[1-guide_prob, guide_prob])
             if use_guide:
                 unscaled_action, _ = self.expert_policy.predict(self._last_obs, deterministic=False)

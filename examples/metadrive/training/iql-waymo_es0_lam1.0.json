@@ -1,0 +1,4 @@
+{
+    "last_timestep": 1000099,
+    "model.logger.dir": "/home/xinyi/src/safe-sb3/examples/metadrive/results/tb/iql-waymo_es0_lam1.0/IQL_3"
+}
