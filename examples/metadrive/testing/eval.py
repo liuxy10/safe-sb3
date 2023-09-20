@@ -70,7 +70,7 @@ def evaluate_model_under_env(
                                                                 env_test, 
                                                                 n_eval_episodes=env_test.config['case_num'], 
                                                                 deterministic=True, 
-                                                                render=False)
+                                                                render=True)
     
     print(header)
     print("mean_reward = ", mean_reward)

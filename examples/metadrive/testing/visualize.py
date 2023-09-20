@@ -116,6 +116,9 @@ def plot_waymo_vs_pred(env, model,seed, md_name, savefig_dir="", save_render_dir
         action_pred [i,:] = action
         actual_rew[i] = r
         cum_rew += r
+        # save
+        rgb_cam = env.vehicle.image_sensors[env.vehicle.config["image_source"]]
+        rgb_cam.save_image(env.vehicle, name="{}.png".format(i))
         
         cum_cost += info['cost']
         # print('seed:', seed, 'step:', i,'action:', action, 'reward: ', r, 'cost: ',info['cost'],'cum reward: ', cum_rew, 'cum cost: ',cum_cost, 'done:', d)
@@ -297,9 +300,6 @@ def show_negative_reward_scenarios(args, ill_seeds):
             if seed < num_scenarios:
                 data = collect_rollout_in_one_seed(env, seed)
     env.close()
-    
-
-
 
 
 
